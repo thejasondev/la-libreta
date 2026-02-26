@@ -1,23 +1,83 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import Navigation from '../components/ui/Navigation';
+import '../styles/global.css';
+
+interface Props {
+	title?: string;
+  description?: string;
+}
+
+const { 
+  title = 'La Libreta - Gestor Personal de Tareas y Finanzas',
+  description = 'Una PWA rápida, Local-first de alto rendimiento para gestión financiera y tareas.'
+} = Astro.props;
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="es">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#088395" />
+    <meta name="description" content={description} />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>{title}</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- 
+      Theme initialization script.
+      - is:inline = runs synchronously before paint (no bundling)
+      - Runs on initial load AND is re-applied via astro:after-swap
+    -->
+    <script is:inline>
+      function applyTheme() {
+        var saved = localStorage.getItem('laLibreta_darkMode');
+        var isDark = saved !== null ? saved === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+
+        var isPro = localStorage.getItem('laLibreta_isProMode');
+        if (isPro === 'true') {
+          document.documentElement.classList.add('theme-pro');
+        } else {
+          document.documentElement.classList.remove('theme-pro');
+        }
+      }
+
+      // Run immediately on first load
+      applyTheme();
+
+      // Re-apply after every Astro View Transition page swap
+      document.addEventListener('astro:after-swap', applyTheme);
+
+      // Also preserve classes during the swap itself
+      document.addEventListener('astro:before-swap', function(e) {
+        var isDark = document.documentElement.classList.contains('dark');
+        var isPro = document.documentElement.classList.contains('theme-pro');
+        if (isDark) e.newDocument.documentElement.classList.add('dark');
+        if (isPro) e.newDocument.documentElement.classList.add('theme-pro');
+      });
+    </script>
+
+    <ClientRouter />
 	</head>
 	<body>
-		<slot />
+    <Navigation client:load transition:persist />
+    <main transition:animate="fade" class="md:pl-64 min-h-screen p-4 md:p-8">
+		  <slot />
+    </main>
 	</body>
 </html>
 
-<style>
-	html,
-	body {
-		margin: 0;
-		width: 100%;
-		height: 100%;
-	}
-</style>

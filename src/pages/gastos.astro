@@ -1,0 +1,14 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ExpenseView from '../components/features/ExpenseView';
+import QuickEntry from '../components/features/QuickEntry';
+---
+
+<Layout title="La Libreta - Gastos">
+  <div class="max-w-4xl mx-auto space-y-8 animate-in fade-in zoom-in duration-500">
+    <section>
+      <QuickEntry client:load />
+    </section>
+    <ExpenseView client:load />
+  </div>
+</Layout>

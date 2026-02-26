@@ -1,11 +1,28 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import QuickEntry from '../components/features/QuickEntry';
+import Header from '../components/ui/Header';
+import Dashboard from '../components/features/Dashboard';
+import RecentActivity from '../components/features/RecentActivity';
 ---
 
-<Layout>
-	<Welcome />
+<Layout title="La Libreta - Panel Principal">
+  <div class="space-y-6 max-w-5xl mx-auto">
+    
+    <Header client:load />
+
+    <!-- The Dashboard Bento Grid (Widgets A, B, C) -->
+    <Dashboard client:load />
+
+    <!-- Quick Entry Section -->
+    <section class="mb-10 w-full animate-in slide-in-from-bottom-4 duration-500">
+      <QuickEntry client:load />
+    </section>
+
+    <!-- Smart Expense List -> Activity Feed -->
+    <section class="pb-16">
+      <RecentActivity client:load />
+    </section>
+
+  </div>
 </Layout>
