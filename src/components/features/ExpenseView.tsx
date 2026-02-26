@@ -8,15 +8,7 @@ import {
   recalculateDailyTotal,
 } from "../../store/appStore";
 import ExpenseRow from "./ExpenseRow";
-import {
-  ShoppingBag,
-  Coffee,
-  Car,
-  Home,
-  TrendingUp,
-  Zap,
-  HelpCircle,
-} from "lucide-react";
+import { getSmartIcon } from "../../lib/smart-icons";
 
 export default function ExpenseView() {
   const isProMode = useStore($isProfessionalMode);
@@ -92,29 +84,9 @@ export default function ExpenseView() {
     return p ? p.color : null;
   };
 
-  const getIconForTags = (tags: string[] = []) => {
-    const tagString = tags.join(" ").toLowerCase();
-    if (tagString.includes("comida") || tagString.includes("restaurante"))
-      return <Coffee className="w-5 h-5" />;
-    if (tagString.includes("transporte") || tagString.includes("taxi"))
-      return <Car className="w-5 h-5" />;
-    if (
-      tagString.includes("casa") ||
-      tagString.includes("hogar") ||
-      tagString.includes("alquiler")
-    )
-      return <Home className="w-5 h-5" />;
-    if (tagString.includes("compra") || tagString.includes("supermercado"))
-      return <ShoppingBag className="w-5 h-5" />;
-    if (tagString.includes("inversión"))
-      return <TrendingUp className="w-5 h-5" />;
-    if (
-      tagString.includes("servicios") ||
-      tagString.includes("luz") ||
-      tagString.includes("internet")
-    )
-      return <Zap className="w-5 h-5" />;
-    return <HelpCircle className="w-5 h-5" />;
+  const getIconForDescription = (description: string) => {
+    const { icon: Icon, color } = getSmartIcon(description);
+    return <Icon className={`w-5 h-5 ${color}`} />;
   };
 
   const formatDate = (ts: string | number) => {
@@ -185,7 +157,7 @@ export default function ExpenseView() {
               key={exp.id}
               expense={exp}
               onDelete={handleDelete}
-              getIconForTags={getIconForTags}
+              getIconForTags={() => getIconForDescription(exp.description)}
               getProjectColor={getProjectColor}
               formatDate={formatDate}
             />

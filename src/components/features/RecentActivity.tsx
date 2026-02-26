@@ -6,16 +6,8 @@ import {
   $currentProject,
   recalculateDailyTotal,
 } from "../../store/appStore";
-import {
-  Coffee,
-  Car,
-  ShoppingCart,
-  Briefcase,
-  FileText,
-  PiggyBank,
-  CheckCircle2,
-  Trash2,
-} from "lucide-react";
+import { getSmartIcon } from "../../lib/smart-icons";
+import { PiggyBank, CheckCircle2, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 // Helper to format date groups
@@ -104,23 +96,7 @@ export default function RecentActivity() {
     alert("Función de edición en desarrollo.");
   };
 
-  // Dynamic Lucide icon mapping based on NLP tags
-  const getIconForTags = (tags: string[] = []) => {
-    const tagString = tags.join(" ").toLowerCase();
-    if (tagString.includes("cafe") || tagString.includes("comida"))
-      return <Coffee className="w-5 h-5" />;
-    if (
-      tagString.includes("viaje") ||
-      tagString.includes("taxi") ||
-      tagString.includes("transporte")
-    )
-      return <Car className="w-5 h-5" />;
-    if (tagString.includes("compra") || tagString.includes("super"))
-      return <ShoppingCart className="w-5 h-5" />;
-    if (tagString.includes("oficina") || tagString.includes("trabajo"))
-      return <Briefcase className="w-5 h-5" />;
-    return <FileText className="w-5 h-5" />; // Fallback
-  };
+  // No longer needed — using getSmartIcon from lib/smart-icons.ts
 
   if (expenses === undefined) {
     // Skeleton Loader
@@ -206,11 +182,7 @@ export default function RecentActivity() {
                 >
                   <div className="flex items-center gap-4 relative z-10">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        isProMode
-                          ? "bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400"
-                          : "bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400"
-                      }`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/10`}
                       style={
                         projectColor
                           ? {
@@ -220,7 +192,16 @@ export default function RecentActivity() {
                           : {}
                       }
                     >
-                      {getIconForTags(expense.tags)}
+                      {(() => {
+                        const { icon: SmartIcon, color } = getSmartIcon(
+                          expense.description,
+                        );
+                        return (
+                          <SmartIcon
+                            className={`w-5 h-5 ${projectColor ? "" : color}`}
+                          />
+                        );
+                      })()}
                     </div>
 
                     <div className="flex flex-col">

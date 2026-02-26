@@ -194,17 +194,17 @@ export default function ProjectManager() {
                       </span>
                     </div>
                   </div>
-                  <div className="w-full h-2.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden shadow-inner">
+                  <div className="w-full h-2.5 bg-gray-200 dark:bg-teal-900/50 rounded-full overflow-hidden shadow-inner">
                     <div
                       className="h-full transition-all duration-500 rounded-full"
                       style={{
                         width: `${progress}%`,
                         backgroundColor:
                           progress > 90
-                            ? "#e11d48"
+                            ? "#f43f5e"
                             : progress > 70
                               ? "#f59e0b"
-                              : "#10b981",
+                              : "#088395",
                       }}
                     />
                   </div>

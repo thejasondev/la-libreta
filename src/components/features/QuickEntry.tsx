@@ -8,14 +8,14 @@ import {
 import { useStore } from "@nanostores/react";
 import { Receipt, CheckSquare, Building2, Coins } from "lucide-react";
 
-type Currency = "USD" | "EUR" | "CUP";
+type Currency = "CUP" | "USD" | "EUR";
 
 export default function QuickEntry() {
   const [activeTab, setActiveTab] = useState<"expense" | "task">("expense");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [isReimbursable, setIsReimbursable] = useState(false);
-  const [currency, setCurrency] = useState<Currency>("USD");
+  const [currency, setCurrency] = useState<Currency>("CUP");
 
   const activeProject = useStore($currentProject);
   const isProMode = useStore($isProfessionalMode);
@@ -83,9 +83,9 @@ export default function QuickEntry() {
   };
 
   const currencySymbols = {
+    CUP: "₱", // Generic for CUP in this context or just use CUP label
     USD: "$",
     EUR: "€",
-    CUP: "₱", // Generic for CUP in this context or just use CUP label
   };
 
   return (
@@ -126,21 +126,23 @@ export default function QuickEntry() {
         <div className="flex flex-col md:flex-row gap-3">
           {activeTab === "expense" && (
             <div className="flex gap-2 md:w-1/2">
-              {/* Currency Selector */}
-              <div className="relative shrink-0">
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value as Currency)}
-                  className="appearance-none bg-white/50 dark:bg-teal-900/50 text-gray-900 dark:text-white px-3 py-3 pr-8 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-transparent dark:border-white/5 text-sm font-bold cursor-pointer h-full"
-                  title="Seleccionar moneda"
-                >
-                  <option value="USD">USD</option>
-                  <option value="CUP">CUP</option>
-                  <option value="EUR">EUR</option>
-                </select>
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                  <Coins className="w-3 h-3" />
-                </div>
+              {/* Currency Pill Selector */}
+              <div className="flex items-center bg-white/50 dark:bg-teal-900/50 rounded-xl border border-transparent dark:border-white/5 overflow-hidden shrink-0">
+                {(["CUP", "USD", "EUR"] as Currency[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCurrency(c)}
+                    className={`px-3 py-2.5 text-[11px] font-extrabold tracking-wide transition-all ${
+                      currency === c
+                        ? "bg-primary-500 text-white"
+                        : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
+                    }`}
+                    title={c}
+                  >
+                    {c}
+                  </button>
+                ))}
               </div>
 
               {/* Amount Input */}
@@ -169,8 +171,8 @@ export default function QuickEntry() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder={
                 activeTab === "expense"
-                  ? "Ej. Almuerzo #comida"
-                  : "Ej. Enviar reporte"
+                  ? "Ej. Gasto de hoy"
+                  : "Ej. Tarea de hoy"
               }
               required
               className="w-full bg-white/50 dark:bg-teal-900/50 text-gray-900 dark:text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-transparent dark:border-white/5"

@@ -6,6 +6,7 @@ import {
   $dailyTotal,
 } from "../../store/appStore";
 import { db } from "../../lib/db";
+import { CalendarCheck } from "lucide-react";
 import BudgetStatus from "./BudgetStatus";
 import FinancialOverview from "./FinancialOverview";
 
@@ -68,11 +69,7 @@ export default function Dashboard() {
           <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">
             Gasto de Hoy
           </span>
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center bg-opacity-20 bg-primary-500 text-primary-500`}
-          >
-            <span className="text-sm font-bold">D</span>
-          </div>
+          <CalendarCheck className="w-5 h-5 text-primary-400 dark:text-primary-300 opacity-60" />
         </div>
         <div>
           <span className="text-3xl font-bold dark:text-white">

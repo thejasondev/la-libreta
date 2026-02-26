@@ -69,20 +69,20 @@ export default function BudgetStatus() {
   const { spentPercentage, status, spentAmountCents, budgetLimitCents } =
     budgetHealth!;
 
-  // Map progress bar colors
+  // Map status badge styles (proper Tailwind v4 syntax)
+  const badgeStyles =
+    status === "Green"
+      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+      : status === "Yellow"
+        ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+        : "bg-rose-500/15 text-rose-600 dark:text-rose-400";
+
   const progressColor =
     status === "Green"
       ? "bg-emerald-500"
       : status === "Yellow"
         ? "bg-amber-500"
         : "bg-rose-500";
-
-  const textColor =
-    status === "Green"
-      ? "text-emerald-500"
-      : status === "Yellow"
-        ? "text-amber-500"
-        : "text-rose-500";
 
   const statusText =
     status === "Green"
@@ -121,13 +121,13 @@ export default function BudgetStatus() {
         </div>
 
         <div
-          className={`px-2 py-1 rounded-md text-xs font-bold bg-opacity-10 dark:bg-opacity-20 ${progressColor.replace("bg-", "bg-")} ${textColor}`}
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${badgeStyles}`}
         >
           {statusText}
         </div>
       </div>
 
-      <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden z-10">
+      <div className="w-full h-2 bg-gray-200 dark:bg-teal-900/50 rounded-full overflow-hidden z-10">
         <div
           className={`h-full ${progressColor} transition-all duration-700 ease-in-out`}
           style={{ width: `${Math.min(spentPercentage, 100)}%` }}

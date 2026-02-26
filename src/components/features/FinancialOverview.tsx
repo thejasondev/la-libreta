@@ -77,11 +77,11 @@ export default function FinancialOverview() {
           <button
             onClick={() => setIsEditingBudget(!isEditingBudget)}
             className="flex items-center gap-1.5 px-2 py-1 bg-white/50 dark:bg-white/5 hover:bg-primary-500/10 rounded-lg text-gray-500 hover:text-primary-500 transition-all border border-transparent hover:border-primary-500/20"
-            title="Configurar meta mensual"
+            title="Configurar presupuesto mensual"
           >
             <Target className="w-3.5 h-3.5" />
-            <span className="text-[10px] font-bold uppercase tracking-tighter">
-              Meta
+            <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-tighter">
+              Presupuesto
             </span>
           </button>
         </div>
@@ -103,14 +103,14 @@ export default function FinancialOverview() {
               value={budgetInput}
               onChange={(e) => setBudgetInput(e.target.value)}
               className="w-full bg-white/50 dark:bg-teal-900/50 text-gray-900 dark:text-white px-4 py-2 pl-8 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-              placeholder="Meta mensual (0 = Libre)"
+              placeholder="Presupuesto mensual (0 = Libre)"
               autoFocus
             />
           </div>
           <button
             type="submit"
             className="px-3 bg-primary-500 hover:bg-primary-600 active:scale-95 text-white font-bold rounded-xl transition-all shadow-md shadow-primary-500/20"
-            title="Guardar Meta Mensual"
+            title="Guardar Presupuesto Mensual"
           >
             <CheckCircle2 className="w-5 h-5" />
           </button>
