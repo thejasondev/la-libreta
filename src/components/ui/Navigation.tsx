@@ -45,17 +45,14 @@ export default function Navigation() {
 
   return (
     <>
-      {/* ─── MOBILE: iOS 26 Floating Pill Nav ─── */}
+      {/* ─── MOBILE: iOS 16+ Floating Tab Bar ─── */}
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:hidden">
         <div
-          className="flex items-center gap-1 px-3 py-2 rounded-2xl shadow-lg shadow-black/20 dark:shadow-black/50"
-          style={{
-            background:
-              "linear-gradient(135deg, rgba(4, 45, 58, 0.85) 0%, rgba(2, 29, 38, 0.92) 100%)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            border: "1px solid rgba(122, 178, 178, 0.12)",
-          }}
+          className="flex items-center gap-1 px-3 py-2 rounded-2xl
+            bg-white/90 dark:bg-[rgba(4,45,58,0.88)]
+            backdrop-blur-xl
+            shadow-lg shadow-black/8 dark:shadow-black/40
+            border border-gray-200/80 dark:border-teal-700/15"
         >
           {visibleItems.map(({ path, label, icon: Icon }) => {
             const active = isActive(path);
@@ -63,21 +60,24 @@ export default function Navigation() {
               <a
                 key={path}
                 href={path}
+                data-astro-prefetch
                 className={`relative flex flex-col items-center justify-center px-4 py-1.5 rounded-xl transition-all duration-200 ${
-                  active ? "text-white" : "text-gray-400 active:scale-90"
+                  active
+                    ? "text-primary-600 dark:text-white"
+                    : "text-gray-400 dark:text-gray-500 active:scale-90"
                 }`}
               >
-                {/* Active glow background */}
+                {/* Active pill background */}
                 {active && (
-                  <div className="absolute inset-0 bg-primary-500/25 rounded-xl" />
+                  <div className="absolute inset-0 bg-primary-500/10 dark:bg-primary-500/25 rounded-xl" />
                 )}
                 <Icon
-                  className={`w-5 h-5 relative z-10 ${active ? "text-primary-300" : ""}`}
+                  className={`w-5 h-5 relative z-10 ${active ? "text-primary-500 dark:text-primary-300" : ""}`}
                   strokeWidth={active ? 2.5 : 1.8}
                 />
                 <span
                   className={`text-[9px] mt-0.5 font-medium relative z-10 ${
-                    active ? "text-primary-200" : ""
+                    active ? "text-primary-600 dark:text-primary-200" : ""
                   }`}
                 >
                   {label}
@@ -94,6 +94,7 @@ export default function Navigation() {
           {/* Logo */}
           <a
             href="/"
+            data-astro-prefetch
             className="flex items-center gap-2.5 mb-8 px-4 w-full group"
           >
             <img
@@ -113,6 +114,7 @@ export default function Navigation() {
               <a
                 key={path}
                 href={path}
+                data-astro-prefetch
                 className={`flex items-center gap-3 px-4 py-2.5 w-full rounded-xl transition-all ${
                   active
                     ? "text-primary-500 bg-primary-50 dark:bg-primary-900/20 font-semibold"

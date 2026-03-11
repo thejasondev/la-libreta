@@ -64,7 +64,7 @@ export default function Dashboard() {
       {isProMode ? <BudgetStatus /> : <FinancialOverview />}
 
       {/* Widget B: Quick Stats (Daily vs Weekly) */}
-      <div className="glass p-5 rounded-2xl flex flex-col justify-between gap-4 shadow-sm border dark:border-white/5">
+      <div className="glass p-5 rounded-2xl flex flex-col justify-between gap-4 shadow-sm border border-gray-200/60 dark:border-white/5">
         <div className="flex justify-between items-start">
           <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">
             Gasto de Hoy
@@ -72,7 +72,7 @@ export default function Dashboard() {
           <CalendarCheck className="w-5 h-5 text-primary-400 dark:text-primary-300 opacity-60" />
         </div>
         <div>
-          <span className="text-3xl font-bold dark:text-white">
+          <span className="text-3xl font-bold text-gray-900 dark:text-white">
             ${(dailyTotal / 100).toFixed(2)}
           </span>
           <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
@@ -101,7 +101,7 @@ export default function Dashboard() {
           </div>
         </a>
       ) : (
-        <div className="glass p-5 rounded-2xl flex flex-col justify-between gap-4 shadow-sm border border-primary-500/10">
+        <div className="glass p-5 rounded-2xl flex flex-col justify-between gap-4 shadow-sm border border-gray-200/60 dark:border-white/5">
           <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">
             Gasto Semanal
           </span>

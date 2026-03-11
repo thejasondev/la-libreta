@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Task } from "../../lib/db";
 import { useStore } from "@nanostores/react";
@@ -9,6 +10,7 @@ import {
   AlertCircle,
   Trash2,
 } from "lucide-react";
+import ConfirmDialog from "../ui/ConfirmDialog";
 
 export default function TaskView() {
   const isProMode = useStore($isProfessionalMode);
@@ -32,10 +34,23 @@ export default function TaskView() {
     await db.tasks.update(task.id, { completed: !task.completed });
   };
 
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
+
   const handleDelete = async (id: string) => {
-    if (window.confirm("¿Eliminar esta tarea?")) {
-      await db.tasks.delete(id);
-    }
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    await db.tasks.delete(deleteTarget);
+    setDeleteTarget(null);
+  };
+
+  const confirmDeleteAll = async () => {
+    const ids = completedTasks.map((t) => t.id);
+    await db.tasks.bulkDelete(ids);
+    setShowDeleteAll(false);
   };
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -60,7 +75,7 @@ export default function TaskView() {
   const priorityColors = {
     high: "text-red-500 bg-red-100 dark:bg-red-900/30",
     medium: "text-amber-500 bg-amber-100 dark:bg-amber-900/30",
-    low: "text-blue-500 bg-blue-100 dark:bg-blue-900/30",
+    low: "text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30",
   };
 
   const TaskItem = ({ task }: { task: Task }) => (
@@ -114,7 +129,7 @@ export default function TaskView() {
 
       <button
         onClick={() => handleDelete(task.id)}
-        className="p-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all"
+        className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors shrink-0"
         title="Eliminar tarea"
       >
         <Trash2 className="w-4 h-4" />
@@ -124,6 +139,26 @@ export default function TaskView() {
 
   return (
     <div className="flex flex-col gap-8 animate-in fade-in zoom-in duration-500">
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        title="Eliminar tarea"
+        message="¿Estás seguro? Esta acción no se puede deshacer."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      <ConfirmDialog
+        isOpen={showDeleteAll}
+        title={
+          isProMode
+            ? "Limpiar tareas profesionales"
+            : "Limpiar tareas personales"
+        }
+        message={`¿Eliminar las ${completedTasks.length} tareas completadas? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar todas"
+        variant={isProMode ? "warning" : "danger"}
+        onConfirm={confirmDeleteAll}
+        onCancel={() => setShowDeleteAll(false)}
+      />
       <div>
         <h2 className="text-2xl font-bold dark:text-white mb-1">Mis Tareas</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -191,9 +226,19 @@ export default function TaskView() {
 
       {completedTasks.length > 0 && (
         <section className="mt-8 opacity-70">
-          <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" /> Completadas
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" /> Completadas
+            </h3>
+            <button
+              onClick={() => setShowDeleteAll(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              title="Eliminar todas las completadas"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Limpiar
+            </button>
+          </div>
           <div className="flex flex-col gap-2">
             {completedTasks.map((t) => (
               <TaskItem key={t.id} task={t} />

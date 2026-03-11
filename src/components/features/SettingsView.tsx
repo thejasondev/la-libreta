@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { db } from "../../lib/db";
 import { useStore } from "@nanostores/react";
 import {
@@ -6,11 +6,19 @@ import {
   $darkMode,
   recalculateDailyTotal,
 } from "../../store/appStore";
+import { showToast } from "../../store/toastStore";
 import { Moon, Sun, Download, Upload, Trash2, ShieldAlert } from "lucide-react";
+import ConfirmDialog from "../ui/ConfirmDialog";
 
 export default function SettingsView() {
   const isProMode = useStore($isProfessionalMode);
   const isDarkMode = useStore($darkMode);
+
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [showNukeConfirm, setShowNukeConfirm] = useState(false);
+  const [showNukeStep2, setShowNukeStep2] = useState(false);
+  const [nukeInput, setNukeInput] = useState("");
+  const [pendingImportData, setPendingImportData] = useState<any>(null);
 
   const toggleDarkMode = () => {
     $darkMode.set(!isDarkMode);
@@ -39,9 +47,10 @@ export default function SettingsView() {
       a.download = `lalibreta_backup_${new Date().toISOString().split("T")[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
+      showToast("Copia de seguridad descargada", "success");
     } catch (e) {
       console.error("Export failed", e);
-      alert("Error exportando datos.");
+      showToast("Error exportando datos", "error");
     }
   };
 
@@ -58,60 +67,156 @@ export default function SettingsView() {
         const data = JSON.parse(text);
 
         if (!data.version || !data.projects || !data.expenses || !data.tasks) {
-          alert("Archivo de backup inválido.");
+          showToast("Archivo de backup inválido", "error");
           return;
         }
 
-        if (
-          !window.confirm(
-            "Esto reemplazará TODOS los datos actuales. ¿Continuar?",
-          )
-        )
-          return;
-
-        await db.projects.clear();
-        await db.expenses.clear();
-        await db.tasks.clear();
-
-        await db.projects.bulkAdd(data.projects);
-        await db.expenses.bulkAdd(data.expenses);
-        await db.tasks.bulkAdd(data.tasks);
-
-        await recalculateDailyTotal();
-        alert("Datos importados con éxito.");
-        window.location.reload();
+        setPendingImportData(data);
+        setShowImportConfirm(true);
       } catch (err) {
-        console.error("Import failed", err);
-        alert("Error importando datos. Verifica el archivo.");
+        console.error("Import parse failed", err);
+        showToast("Error leyendo el archivo. Verifica el formato.", "error");
       }
     };
     input.click();
   };
 
-  const handleNuke = async () => {
-    const confirmation1 = window.confirm(
-      "¿ESTÁS SEGURO? Esto eliminará todos tus gastos, tareas y proyectos de tu dispositivo.",
-    );
-    if (!confirmation1) return;
+  const confirmImport = async () => {
+    if (!pendingImportData) return;
+    try {
+      await db.projects.clear();
+      await db.expenses.clear();
+      await db.tasks.clear();
 
-    const confirmation2 = window.prompt('Para confirmar, escribe "borrar"');
-    if (confirmation2 !== "borrar") return;
+      await db.projects.bulkAdd(pendingImportData.projects);
+      await db.expenses.bulkAdd(pendingImportData.expenses);
+      await db.tasks.bulkAdd(pendingImportData.tasks);
+
+      await recalculateDailyTotal();
+      showToast("Datos importados con éxito", "success");
+      setShowImportConfirm(false);
+      setPendingImportData(null);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      console.error("Import failed", err);
+      showToast("Error importando datos", "error");
+      setShowImportConfirm(false);
+      setPendingImportData(null);
+    }
+  };
+
+  const handleNuke = () => {
+    setShowNukeConfirm(true);
+  };
+
+  const confirmNukeStep1 = () => {
+    setShowNukeConfirm(false);
+    setShowNukeStep2(true);
+    setNukeInput("");
+  };
+
+  const confirmNukeStep2 = async () => {
+    if (nukeInput !== "borrar") {
+      showToast("Escribe 'borrar' para confirmar", "warning");
+      return;
+    }
 
     try {
       await db.expenses.clear();
       await db.tasks.clear();
       await db.projects.clear();
       await recalculateDailyTotal();
-      alert("Base de datos reiniciada con éxito.");
-      window.location.reload();
+      showToast("Base de datos reiniciada con éxito", "success");
+      setShowNukeStep2(false);
+      setNukeInput("");
+      setTimeout(() => window.location.reload(), 1500);
     } catch (e) {
       console.error("Nuke failed", e);
-      alert("Falló el reinicio de la base de datos.");
+      showToast("Falló el reinicio de la base de datos", "error");
+      setShowNukeStep2(false);
     }
   };
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in zoom-in duration-500 max-w-2xl mx-auto w-full">
+      {/* ─── Dialogs ─── */}
+      <ConfirmDialog
+        isOpen={showImportConfirm}
+        title="Importar datos"
+        message="Esto reemplazará TODOS los datos actuales con los del archivo. ¿Continuar?"
+        confirmLabel="Importar"
+        variant="warning"
+        onConfirm={confirmImport}
+        onCancel={() => {
+          setShowImportConfirm(false);
+          setPendingImportData(null);
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showNukeConfirm}
+        title="Restablecer aplicación"
+        message="¿ESTÁS SEGURO? Esto eliminará todos tus gastos, tareas y proyectos de tu dispositivo."
+        confirmLabel="Continuar"
+        variant="danger"
+        onConfirm={confirmNukeStep1}
+        onCancel={() => setShowNukeConfirm(false)}
+      />
+
+      {/* Step 2: Type confirmation */}
+      {showNukeStep2 && (
+        <div
+          className="fixed inset-0 z-999 flex items-center justify-center p-4"
+          onClick={() => setShowNukeStep2(false)}
+        >
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-sm bg-white dark:bg-teal-950 rounded-2xl shadow-2xl p-6 flex flex-col gap-4 border border-gray-200/60 dark:border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center">
+              <ShieldAlert className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Confirmación final
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Escribe <strong className="text-red-500">"borrar"</strong> para
+                confirmar la eliminación permanente.
+              </p>
+            </div>
+            <input
+              type="text"
+              value={nukeInput}
+              onChange={(e) => setNukeInput(e.target.value)}
+              placeholder='Escribe "borrar"...'
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white text-sm outline-none focus:ring-2 focus:ring-red-500/50"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowNukeStep2(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmNukeStep2}
+                disabled={nukeInput !== "borrar"}
+                className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95 shadow-md ${
+                  nukeInput === "borrar"
+                    ? "bg-red-500 hover:bg-red-600 shadow-red-500/20"
+                    : "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
+                }`}
+              >
+                Eliminar Todo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <h2 className="text-2xl font-bold dark:text-white mb-2">Ajustes</h2>
 
       {/* Appearance Section */}

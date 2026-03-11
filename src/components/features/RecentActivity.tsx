@@ -9,6 +9,8 @@ import {
 import { getSmartIcon } from "../../lib/smart-icons";
 import { PiggyBank, CheckCircle2, Trash2 } from "lucide-react";
 import { useState } from "react";
+import ConfirmDialog from "../ui/ConfirmDialog";
+import { showToast } from "../../store/toastStore";
 
 // Helper to format date groups
 const getRelativeDateGroup = (dateString: string) => {
@@ -43,6 +45,7 @@ export default function RecentActivity() {
   const currentProject = useStore($currentProject);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Combine query for projects to show dynamic colors
   const projects = useLiveQuery(() => db.projects.toArray(), []) || [];
@@ -79,21 +82,27 @@ export default function RecentActivity() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      setDeletingId(id);
-      await db.expenses.delete(id);
-      recalculateDailyTotal(); // trigger nano store sync
-    } catch (error) {
-      console.error("Failed to delete", error);
+      setDeletingId(deleteTarget);
+      await db.expenses.delete(deleteTarget);
+      recalculateDailyTotal();
+    } catch (err) {
+      console.error("Failed to delete expense", err);
     } finally {
       setDeletingId(null);
+      setDeleteTarget(null);
     }
   };
 
   // Edit Placeholder (For Phase 5 or future implementation)
   const handleEdit = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    alert("Función de edición en desarrollo.");
+    showToast("Función de edición en desarrollo", "info");
   };
 
   // No longer needed — using getSmartIcon from lib/smart-icons.ts
@@ -124,8 +133,16 @@ export default function RecentActivity() {
   if (expenses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center glass rounded-3xl border-dashed border-2 border-gray-200 dark:border-white/10">
-        <div className="w-16 h-16 mb-4 text-teal-200 dark:text-teal-900/50 flex items-center justify-center rounded-full bg-teal-50 dark:bg-white/5">
-          <PiggyBank className="w-8 h-8 text-teal-400" />
+        <div
+          className={`w-16 h-16 mb-4 flex items-center justify-center rounded-full ${
+            isProMode
+              ? "text-amber-200 dark:text-amber-900/50 bg-amber-50 dark:bg-amber-500/10"
+              : "text-teal-200 dark:text-teal-900/50 bg-teal-50 dark:bg-white/5"
+          }`}
+        >
+          <PiggyBank
+            className={`w-8 h-8 ${isProMode ? "text-amber-500" : "text-teal-400"}`}
+          />
         </div>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
           {isProMode
@@ -156,6 +173,13 @@ export default function RecentActivity() {
 
   return (
     <div className="flex flex-col gap-6 w-full">
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        title="Eliminar gasto"
+        message="¿Estás seguro? Esta acción eliminará el gasto de tu registro."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">Actividad Reciente</h2>
         <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-white/5 rounded-lg text-gray-500">
@@ -165,7 +189,7 @@ export default function RecentActivity() {
 
       {Object.entries(groupedExpenses).map(([dateLabel, exps]) => (
         <div key={dateLabel} className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 capitalize drop-shadow-sm sticky top-0 bg-white/50 dark:bg-teal-950/50 backdrop-blur-md z-10 py-1 rounded-md px-1 inline-block w-fit">
+          <h3 className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider bg-gray-100 dark:bg-teal-950/50 backdrop-blur-md z-10 py-1.5 px-3 rounded-lg inline-block w-fit">
             {dateLabel}
           </h3>
 
@@ -176,7 +200,7 @@ export default function RecentActivity() {
               return (
                 <div
                   key={expense.id}
-                  className={`group relative glass p-4 rounded-2xl flex items-center justify-between hover:bg-white/40 dark:hover:bg-white/10 transition-all cursor-pointer overflow-hidden ${deletingId === expense.id ? "opacity-50 scale-[0.98]" : ""}`}
+                  className={`group relative glass p-4 rounded-2xl flex items-center justify-between border border-gray-200/60 dark:border-transparent hover:border-primary-300 dark:hover:border-white/10 hover:shadow-md transition-all cursor-pointer overflow-hidden ${deletingId === expense.id ? "opacity-50 scale-[0.98]" : ""}`}
                   // @ts-ignore
                   style={{ viewTransitionName: `expense-${expense.id}` }}
                 >
@@ -205,7 +229,7 @@ export default function RecentActivity() {
                     </div>
 
                     <div className="flex flex-col">
-                      <span className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-1">
+                      <span className="font-semibold text-gray-800 dark:text-gray-100 line-clamp-1">
                         {expense.description}
                       </span>
                       <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
@@ -254,15 +278,6 @@ export default function RecentActivity() {
                   </div>
 
                   <div className="flex items-center gap-3 relative z-10">
-                    {/* Delete Action (Revealed on hover on desktop, or simple button. For PWA, a simple icon button is effective) */}
-                    <button
-                      onClick={(e) => handleDelete(expense.id, e)}
-                      className="p-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all sm:flex hidden"
-                      title="Eliminar gasto"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-
                     <div className="text-right">
                       <span className="font-bold text-gray-900 dark:text-white block">
                         {expense.currency === "EUR" ? "€" : "$"}
@@ -272,6 +287,14 @@ export default function RecentActivity() {
                         {expense.currency}
                       </span>
                     </div>
+                    {/* Delete Action (Revealed on hover on desktop, or simple button. For PWA, a simple icon button is effective) */}
+                    <button
+                      onClick={(e) => handleDelete(expense.id, e)}
+                      className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors shrink-0"
+                      title="Eliminar gasto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               );

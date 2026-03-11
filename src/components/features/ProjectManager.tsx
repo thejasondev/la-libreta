@@ -3,6 +3,8 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Project } from "../../lib/db";
 import { $currentProject } from "../../store/appStore";
 import { Plus, X, Briefcase, CheckCircle2, Trash2, Pencil } from "lucide-react";
+import ConfirmDialog from "../ui/ConfirmDialog";
+import { showToast } from "../../store/toastStore";
 import { useStore } from "@nanostores/react";
 
 const predefinedColors = [
@@ -66,23 +68,25 @@ export default function ProjectManager() {
       });
     } catch (error) {
       console.error(error);
-      alert("Error creando proyecto");
+      showToast("Error creando proyecto", "error");
     }
   };
 
-  const handleDelete = async (projId: string, e: React.MouseEvent) => {
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  const handleDelete = (projId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (
-      !window.confirm(
-        "¿Eliminar este proyecto? Los gastos asociados se conservarán.",
-      )
-    )
-      return;
+    setDeleteTarget(projId);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await db.projects.delete(projId);
-      if (currentProject?.id === projId) {
+      await db.projects.delete(deleteTarget);
+      if (currentProject?.id === deleteTarget) {
         $currentProject.set(null);
       }
+      setDeleteTarget(null);
     } catch (error) {
       console.error("Failed to delete project", error);
     }
@@ -100,6 +104,14 @@ export default function ProjectManager() {
 
   return (
     <div className="w-full h-full flex flex-col relative">
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        title="Eliminar proyecto"
+        message="¿Estás seguro? Los gastos asociados se conservarán pero el proyecto será eliminado."
+        confirmLabel="Eliminar"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
       <div className="flex justify-end mb-6">
         <button
           onClick={() => setIsModalOpen(true)}
@@ -156,7 +168,7 @@ export default function ProjectManager() {
                 {/* Delete button */}
                 <button
                   onClick={(e) => handleDelete(proj.id, e)}
-                  className="absolute top-4 right-12 p-1.5 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all rounded-full hover:bg-red-50 dark:hover:bg-red-900/30"
+                  className="absolute top-4 right-12 p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-full hover:bg-red-50 dark:hover:bg-red-900/30"
                   title="Eliminar proyecto"
                 >
                   <Trash2 className="w-4 h-4" />

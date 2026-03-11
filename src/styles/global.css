@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Tailwind v4: Use class-based dark mode (.dark on <html>) instead of OS prefers-color-scheme */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-inter: "Inter", sans-serif;
 
@@ -36,12 +39,12 @@
 @layer base {
   /* ─── LIGHT MODE (default) ─── */
   :root {
-    --glass-bg: rgba(255, 255, 255, 0.75);
-    --glass-border: rgba(8, 131, 149, 0.1);
-    --bg-base: #ebf4f6;
+    --glass-bg: rgba(255, 255, 255, 0.92);
+    --glass-border: rgba(8, 131, 149, 0.12);
+    --bg-base: #f7fafb;
     --bg-surface: #ffffff;
-    --text-base: #042d3a;
-    --text-muted: #09637e;
+    --text-base: #0f172a;
+    --text-muted: #475569;
 
     /* Personal Mode = Teal palette */
     --primary-50: #ebf4f6;

@@ -48,7 +48,7 @@ export default function FinancialOverview() {
   const isTrackOnly = personalBudgetCents === 0;
 
   return (
-    <div className="glass p-6 rounded-2xl flex flex-col gap-4 col-span-1 lg:col-span-2 shadow-sm border border-primary-500/20 relative overflow-hidden group">
+    <div className="glass p-6 rounded-2xl flex flex-col gap-4 col-span-1 lg:col-span-2 shadow-sm border border-gray-200/60 dark:border-primary-500/20 relative overflow-hidden group">
       <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary-500/10 blur-3xl rounded-full pointer-events-none"></div>
 
       <div className="flex justify-between items-start z-10">
@@ -58,7 +58,7 @@ export default function FinancialOverview() {
             Resumen del Mes
           </span>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-3xl font-bold dark:text-white">
+            <span className="text-3xl font-bold text-gray-900 dark:text-white">
               ${(monthlySpentCents / 100).toFixed(2)}
             </span>
             {!isTrackOnly && (

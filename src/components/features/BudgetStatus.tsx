@@ -92,7 +92,7 @@ export default function BudgetStatus() {
         : "Excedido";
 
   return (
-    <div className="glass p-6 rounded-2xl flex flex-col gap-4 col-span-1 lg:col-span-2 shadow-sm border border-amber-500/20 relative overflow-hidden">
+    <div className="glass p-6 rounded-2xl flex flex-col gap-4 col-span-1 lg:col-span-2 shadow-sm border border-gray-200/60 dark:border-amber-500/20 relative overflow-hidden">
       {/* Dynamic Project Color Glow if it exists */}
       {currentProject?.color && (
         <div
@@ -111,7 +111,7 @@ export default function BudgetStatus() {
             {currentProject?.name}
           </span>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-3xl font-bold dark:text-white">
+            <span className="text-3xl font-bold text-gray-900 dark:text-white">
               ${(spentAmountCents / 100).toFixed(2)}
             </span>
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400">

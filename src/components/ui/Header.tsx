@@ -1,4 +1,5 @@
 import { useStore } from "@nanostores/react";
+import { showToast } from "../../store/toastStore";
 import { $isProfessionalMode, $currentProject } from "../../store/appStore";
 import { generateReimbursementReport } from "../../lib/finance-logic";
 import { Briefcase, Download, User } from "lucide-react";
@@ -13,7 +14,10 @@ export default function Header() {
 
   const handleGenerateReport = async () => {
     if (!currentProject) {
-      alert("Selecciona un proyecto primero para generar un reporte.");
+      showToast(
+        "Selecciona un proyecto primero para generar un reporte.",
+        "warning",
+      );
       return;
     }
 
@@ -33,7 +37,7 @@ export default function Header() {
       downloadAnchorNode.remove();
     } catch (error) {
       console.error(error);
-      alert("Error generating report");
+      showToast("Error generando reporte", "error");
     }
   };
 
@@ -85,7 +89,7 @@ export default function Header() {
           onClick={toggleProMode}
           className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs md:text-sm font-bold transition-all border ${
             isProMode
-              ? "bg-teal-950 text-amber-400 border-amber-500/30"
+              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
               : "glass text-teal-600 dark:text-teal-400 border-white/10 hover:bg-white/5"
           }`}
         >

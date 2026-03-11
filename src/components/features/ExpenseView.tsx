@@ -105,9 +105,9 @@ export default function ExpenseView() {
   return (
     <div className="flex flex-col gap-6 animate-in fade-in zoom-in duration-500">
       {/* Header and Filters */}
-      <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 glass p-5 rounded-2xl border border-primary-500/10">
+      <div className="flex flex-col md:flex-row justify-between md:items-end gap-4 glass p-5 rounded-2xl border border-gray-200/60 dark:border-primary-500/10">
         <div>
-          <h2 className="text-2xl font-bold dark:text-white">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Gastos e Ingresos
           </h2>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
@@ -119,28 +119,50 @@ export default function ExpenseView() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <select
-            value={timeFilter}
-            onChange={(e) => setTimeFilter(e.target.value as any)}
-            className="glass bg-transparent border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            title="Filtrar por período"
-          >
-            <option value="thisMonth">Este Mes</option>
-            <option value="lastMonth">Mes Anterior</option>
-            <option value="all">Todo Histórico</option>
-          </select>
+          {/* Time Filter Pill Selector */}
+          <div className="flex items-center bg-white/50 dark:bg-teal-900/50 rounded-xl border border-gray-200/60 dark:border-white/5 overflow-hidden">
+            {[
+              { value: "thisMonth" as const, label: "Este Mes" },
+              { value: "lastMonth" as const, label: "Anterior" },
+              { value: "all" as const, label: "Todo" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setTimeFilter(opt.value)}
+                className={`px-3 py-2 text-xs font-bold transition-all ${
+                  timeFilter === opt.value
+                    ? "bg-primary-500 text-white"
+                    : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
 
+          {/* Status Filter Pill Selector (Pro Mode only) */}
           {isProMode && (
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="glass bg-transparent border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              title="Filtrar por estado"
-            >
-              <option value="all">Cualquier Estado</option>
-              <option value="pending">Pendiente Reembolso</option>
-              <option value="paid">Reembolsado</option>
-            </select>
+            <div className="flex items-center bg-white/50 dark:bg-teal-900/50 rounded-xl border border-gray-200/60 dark:border-white/5 overflow-hidden">
+              {[
+                { value: "all" as const, label: "Todos" },
+                { value: "pending" as const, label: "Pendiente" },
+                { value: "paid" as const, label: "Reembolsado" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setStatusFilter(opt.value)}
+                  className={`px-3 py-2 text-xs font-bold transition-all ${
+                    statusFilter === opt.value
+                      ? "bg-primary-500 text-white"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </div>

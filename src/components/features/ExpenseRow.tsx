@@ -43,12 +43,7 @@ export default function ExpenseRow({
   const handleTouchEnd = () => {
     setIsSwiping(false);
     if (offset < triggerThreshold) {
-      // Trigger delete immediately or confirm? Let's confirm for safety or just delete if they swiped far
-      if (window.confirm("¿Eliminar este gasto?")) {
-        onDelete(expense.id);
-      } else {
-        setOffset(0);
-      }
+      onDelete(expense.id);
     } else {
       setOffset(0);
     }
@@ -107,10 +102,10 @@ export default function ExpenseRow({
             </span>
           </div>
 
-          {/* Desktop Hover Delete Action */}
+          {/* Delete Action */}
           <button
             onClick={() => onDelete(expense.id)}
-            className="p-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all hidden sm:flex"
+            className="p-2 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors shrink-0"
             title="Eliminar gasto"
           >
             <Trash2 className="w-4 h-4" />

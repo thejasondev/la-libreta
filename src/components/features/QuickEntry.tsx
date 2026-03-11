@@ -7,8 +7,31 @@ import {
 } from "../../store/appStore";
 import { useStore } from "@nanostores/react";
 import { Receipt, CheckSquare, Building2, Coins } from "lucide-react";
+import { showToast } from "../../store/toastStore";
 
 type Currency = "CUP" | "USD" | "EUR";
+type Priority = "high" | "medium" | "low";
+
+const priorityConfig: Record<
+  Priority,
+  { label: string; color: string; activeColor: string }
+> = {
+  high: {
+    label: "Urgente",
+    color: "text-red-400",
+    activeColor: "bg-red-500 text-white",
+  },
+  medium: {
+    label: "Media",
+    color: "text-amber-400",
+    activeColor: "bg-amber-500 text-white",
+  },
+  low: {
+    label: "Baja",
+    color: "text-emerald-400",
+    activeColor: "bg-emerald-500 text-white",
+  },
+};
 
 export default function QuickEntry() {
   const [activeTab, setActiveTab] = useState<"expense" | "task">("expense");
@@ -16,6 +39,7 @@ export default function QuickEntry() {
   const [description, setDescription] = useState("");
   const [isReimbursable, setIsReimbursable] = useState(false);
   const [currency, setCurrency] = useState<Currency>("CUP");
+  const [priority, setPriority] = useState<Priority>("medium");
 
   const activeProject = useStore($currentProject);
   const isProMode = useStore($isProfessionalMode);
@@ -33,7 +57,7 @@ export default function QuickEntry() {
       if (activeTab === "expense") {
         const amountCents = Math.round(parseFloat(amount || "0") * 100);
         if (amountCents <= 0) {
-          alert("Ingresa un monto válido");
+          showToast("Ingresa un monto válido", "warning");
           return;
         }
 
@@ -65,7 +89,7 @@ export default function QuickEntry() {
           ...baseRecord,
           title: description.trim(),
           completed: false,
-          priority: "medium",
+          priority,
           isProfessional: isProMode,
           projectId: isProMode && activeProject ? activeProject.id : undefined,
           dueDate: new Date().toISOString(),
@@ -76,16 +100,17 @@ export default function QuickEntry() {
       setAmount("");
       setDescription("");
       setIsReimbursable(false);
+      setPriority("medium");
     } catch (e) {
       console.error("Failed to save entry", e);
-      alert("Hubo un error al guardar tu entrada.");
+      showToast("Hubo un error al guardar tu entrada", "error");
     }
   };
 
   const currencySymbols = {
-    CUP: "₱", // Generic for CUP in this context or just use CUP label
-    USD: "$",
-    EUR: "€",
+    CUP: "🇨🇺",
+    USD: "🇺🇸",
+    EUR: "🇪🇺",
   };
 
   return (
@@ -158,7 +183,7 @@ export default function QuickEntry() {
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                   required
-                  className="w-full bg-white/50 dark:bg-teal-900/50 text-gray-900 dark:text-white px-4 py-3 pl-8 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-transparent dark:border-white/5"
+                  className="w-full bg-white/50 dark:bg-teal-900/50 text-gray-900 dark:text-white px-4 py-3 pl-8 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-gray-200/60 dark:border-white/5"
                 />
               </div>
             </div>
@@ -175,7 +200,7 @@ export default function QuickEntry() {
                   : "Ej. Tarea de hoy"
               }
               required
-              className="w-full bg-white/50 dark:bg-teal-900/50 text-gray-900 dark:text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-transparent dark:border-white/5"
+              className="w-full bg-white/50 dark:bg-teal-900/50 text-gray-900 dark:text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-gray-200/60 dark:border-white/5"
             />
           </div>
 
@@ -186,6 +211,32 @@ export default function QuickEntry() {
             {activeTab === "expense" ? "Registrar Gasto" : "Registrar Tarea"}
           </button>
         </div>
+
+        {/* Priority Selector (Task tab only) */}
+        {activeTab === "task" && (
+          <div className="flex items-center gap-3 px-1">
+            <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+              Prioridad:
+            </span>
+            <div className="flex items-center bg-white/50 dark:bg-teal-900/50 rounded-xl border border-gray-200/60 dark:border-white/5 overflow-hidden">
+              {(["high", "medium", "low"] as Priority[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPriority(p)}
+                  className={`px-2.5 py-1.5 text-[10px] font-bold tracking-wide transition-all ${
+                    priority === p
+                      ? priorityConfig[p].activeColor
+                      : `${priorityConfig[p].color} hover:opacity-80`
+                  }`}
+                  title={priorityConfig[p].label}
+                >
+                  {priorityConfig[p].label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Extra Options Row */}
         <div className="flex flex-wrap items-center gap-4 px-1">
