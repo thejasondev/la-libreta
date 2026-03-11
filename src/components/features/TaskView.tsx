@@ -74,7 +74,8 @@ export default function TaskView() {
 
   const priorityColors = {
     high: "text-red-500 bg-red-100 dark:bg-red-900/30",
-    medium: "text-amber-500 bg-amber-100 dark:bg-amber-900/30",
+    medium:
+      "text-primary-600 bg-primary-100 dark:bg-primary-900/30 dark:text-primary-400",
     low: "text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30",
   };
 

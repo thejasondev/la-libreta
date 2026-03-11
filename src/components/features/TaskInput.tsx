@@ -18,8 +18,8 @@ const priorityConfig: Record<
   },
   medium: {
     label: "Media",
-    color: "text-amber-400",
-    activeColor: "bg-amber-500 text-white",
+    color: "text-primary-500",
+    activeColor: "bg-primary-500 text-white",
   },
   low: {
     label: "Baja",

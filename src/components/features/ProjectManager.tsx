@@ -112,12 +112,12 @@ export default function ProjectManager() {
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-      <div className="flex justify-end mb-6">
+      <div className="flex sm:justify-end mb-6">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-primary-500/20"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-primary-500/20"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-5 h-5" />
           Nuevo Proyecto
         </button>
       </div>
@@ -168,14 +168,14 @@ export default function ProjectManager() {
                 {/* Delete button */}
                 <button
                   onClick={(e) => handleDelete(proj.id, e)}
-                  className="absolute top-4 right-12 p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-full hover:bg-red-50 dark:hover:bg-red-900/30"
+                  className="absolute top-4 right-12 z-20 p-2 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 touch-manipulation"
                   title="Eliminar proyecto"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-5 h-5" />
                 </button>
 
-                <div className="z-10">
-                  <span className="flex items-center gap-2 font-bold text-lg dark:text-gray-100">
+                <div className="z-10 relative">
+                  <span className="flex items-center gap-2 font-bold text-lg text-gray-900 dark:text-gray-100">
                     <span
                       className="w-3 h-3 rounded-full shrink-0"
                       style={{ backgroundColor: proj.color }}
@@ -193,7 +193,7 @@ export default function ProjectManager() {
                       <span className="text-xs text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider">
                         Restante
                       </span>
-                      <span className="dark:text-white font-bold text-lg">
+                      <span className="text-gray-900 dark:text-white font-bold text-lg">
                         ${remaining.toFixed(2)}
                       </span>
                     </div>
