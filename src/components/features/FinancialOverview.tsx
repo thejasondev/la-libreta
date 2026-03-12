@@ -1,6 +1,14 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../../lib/db";
-import { Wallet, Settings2, CheckCircle2, Target, Pencil } from "lucide-react";
+import {
+  Wallet,
+  Settings2,
+  CheckCircle2,
+  Target,
+  Pencil,
+  ArrowUpCircle,
+  ArrowDownCircle,
+} from "lucide-react";
 import { useStore } from "@nanostores/react";
 import { $personalBudget, $isProfessionalMode } from "../../store/appStore";
 import { useState } from "react";
@@ -15,23 +23,31 @@ export default function FinancialOverview() {
     (personalBudgetCents / 100).toString(),
   );
 
-  // Simple live query to sum all expenses for the current month
-  const monthlySpentCents = useLiveQuery(
+  // Live query: split expenses vs income for the current month
+  const monthlyData = useLiveQuery(
     () => {
       return db.expenses
         .filter((exp) => {
           const d = new Date(exp.date);
           return (
-            exp.isProfessional === isProMode && // Isolation filter
+            exp.isProfessional === isProMode &&
             d.getMonth() === currentMonth &&
             d.getFullYear() === currentYear
           );
         })
         .toArray()
-        .then((exps) => exps.reduce((sum, exp) => sum + exp.amount, 0));
+        .then((exps) => {
+          const spent = exps
+            .filter((e) => !e.type || e.type === "expense")
+            .reduce((sum, e) => sum + e.amount, 0);
+          const earned = exps
+            .filter((e) => e.type === "income")
+            .reduce((sum, e) => sum + e.amount, 0);
+          return { spent, earned };
+        });
     },
-    [isProMode], // Dependency on mode
-    0,
+    [isProMode],
+    { spent: 0, earned: 0 },
   );
 
   const saveBudget = (e: React.FormEvent) => {
@@ -43,9 +59,10 @@ export default function FinancialOverview() {
 
   const percentage =
     personalBudgetCents > 0
-      ? Math.min((monthlySpentCents / personalBudgetCents) * 100, 100)
+      ? Math.min((monthlyData.spent / personalBudgetCents) * 100, 100)
       : 0;
   const isTrackOnly = personalBudgetCents === 0;
+  const netBalance = monthlyData.earned - monthlyData.spent;
 
   return (
     <div className="glass p-6 rounded-2xl flex flex-col gap-4 col-span-1 lg:col-span-2 shadow-sm border border-gray-200/60 dark:border-primary-500/20 relative overflow-hidden group">
@@ -59,7 +76,7 @@ export default function FinancialOverview() {
           </span>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-3xl font-bold text-gray-900 dark:text-white">
-              ${(monthlySpentCents / 100).toFixed(2)}
+              ${(monthlyData.spent / 100).toFixed(2)}
             </span>
             {!isTrackOnly && (
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -67,6 +84,23 @@ export default function FinancialOverview() {
               </span>
             )}
           </div>
+          {/* Income & Net Balance line */}
+          {(monthlyData.earned > 0 || !isProMode) && (
+            <div className="mt-1.5 flex items-center gap-3 text-xs">
+              {monthlyData.earned > 0 && (
+                <span className="flex items-center gap-1 text-emerald-500 font-semibold">
+                  <ArrowUpCircle className="w-3 h-3" />
+                  +${(monthlyData.earned / 100).toFixed(2)}
+                </span>
+              )}
+              <span
+                className={`font-bold ${netBalance >= 0 ? "text-emerald-500" : "text-red-400"}`}
+              >
+                Neto: {netBalance >= 0 ? "+" : ""}$
+                {(netBalance / 100).toFixed(2)}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col items-end gap-2">

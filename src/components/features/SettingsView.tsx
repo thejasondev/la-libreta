@@ -7,8 +7,17 @@ import {
   recalculateDailyTotal,
 } from "../../store/appStore";
 import { showToast } from "../../store/toastStore";
-import { Moon, Sun, Download, Upload, Trash2, ShieldAlert } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  Download,
+  Upload,
+  Trash2,
+  ShieldAlert,
+  FileSpreadsheet,
+} from "lucide-react";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import { CATEGORIES } from "../../lib/categories";
 
 export default function SettingsView() {
   const isProMode = useStore($isProfessionalMode);
@@ -51,6 +60,64 @@ export default function SettingsView() {
     } catch (e) {
       console.error("Export failed", e);
       showToast("Error exportando datos", "error");
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const expenses = await db.expenses.toArray();
+      if (expenses.length === 0) {
+        showToast("No hay gastos para exportar", "warning");
+        return;
+      }
+
+      // Prepare CSV Headers
+      const headers = [
+        "ID",
+        "Fecha",
+        "Descripción",
+        "Monto",
+        "Moneda",
+        "Categoría",
+        "Es Profesional",
+        "Reembolsable",
+      ];
+
+      // Prepare CSV Rows
+      const rows = expenses.map((exp) => {
+        const catLabel = exp.categoryId
+          ? CATEGORIES[exp.categoryId as keyof typeof CATEGORIES]?.label ||
+            "Otros"
+          : "Otros";
+
+        return [
+          exp.id,
+          new Date(exp.date).toLocaleDateString(),
+          `"${exp.description.replace(/"/g, '""')}"`, // escape quotes
+          (exp.amount / 100).toFixed(2),
+          exp.currency,
+          catLabel,
+          exp.isProfessional ? "Sí" : "No",
+          exp.isReimbursable ? "Sí" : "No",
+        ].join(",");
+      });
+
+      const csvContent = [headers.join(","), ...rows].join("\n");
+
+      // UTF-8 BOM so Excel opens it with correct accents
+      const blob = new Blob(["\uFEFF" + csvContent], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `gastos_lalibreta_${new Date().toISOString().split("T")[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("CSV exportado con éxito", "success");
+    } catch (e) {
+      console.error("CSV Export failed", e);
+      showToast("Error exportando a CSV", "error");
     }
   };
 
@@ -277,10 +344,10 @@ export default function SettingsView() {
             </div>
             <div>
               <p className="font-medium dark:text-white">
-                Exportar Copia de Seguridad
+                Exportar Backup (JSON)
               </p>
               <p className="text-xs text-gray-500">
-                Descargar tus datos en formato JSON
+                Descargar todos los datos para restaurarlos
               </p>
             </div>
           </div>
@@ -289,6 +356,28 @@ export default function SettingsView() {
             className="px-4 py-2 bg-blue-50 hover:bg-blue-100 dark:bg-white/10 dark:hover:bg-white/20 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-bold transition-colors w-full sm:w-auto text-center"
           >
             Descargar
+          </button>
+        </div>
+
+        <div className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-200 dark:border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-orange-500/20 text-orange-500">
+              <FileSpreadsheet className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-medium dark:text-white">
+                Exportar a Excel (CSV)
+              </p>
+              <p className="text-xs text-gray-500">
+                Descargar gastos en tabla para contabilidad
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleExportCSV}
+            className="px-4 py-2 bg-orange-50 hover:bg-orange-100 dark:bg-white/10 dark:hover:bg-white/20 text-orange-600 dark:text-orange-400 rounded-lg text-sm font-bold transition-colors w-full sm:w-auto text-center"
+          >
+            Exportar CSV
           </button>
         </div>
 

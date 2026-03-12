@@ -17,6 +17,7 @@ export interface Expense {
   amount: number;
   currency: "USD" | "EUR" | "CUP";
   description: string;
+  type: "expense" | "income";
   tags: string[];
   date: string;
   categoryId?: string;
@@ -99,6 +100,25 @@ export class LaLibretaDB extends Dexie {
             }
             if (typeof project.createdAt === "string") {
               project.createdAt = new Date(project.createdAt).getTime();
+            }
+          });
+      });
+
+    // Version 3: Added type field to expenses (expense | income)
+    this.version(3)
+      .stores({
+        tasks:
+          "id, title, completed, priority, isProfessional, projectId, dueDate, categoryId, createdAt",
+        expenses:
+          "id, type, date, amount, currency, categoryId, projectId, isProfessional, isReimbursable, status, createdAt",
+        projects: "id, name, createdAt",
+      })
+      .upgrade((tx) => {
+        tx.table("expenses")
+          .toCollection()
+          .modify((expense) => {
+            if (!expense.type) {
+              expense.type = "expense";
             }
           });
       });

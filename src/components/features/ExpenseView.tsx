@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "../../lib/db";
+import { db, type Expense } from "../../lib/db";
 import { useStore } from "@nanostores/react";
 import {
   $isProfessionalMode,
@@ -8,7 +8,7 @@ import {
   recalculateDailyTotal,
 } from "../../store/appStore";
 import ExpenseRow from "./ExpenseRow";
-import { getSmartIcon } from "../../lib/smart-icons";
+import EditExpenseModal from "./EditExpenseModal";
 
 export default function ExpenseView() {
   const isProMode = useStore($isProfessionalMode);
@@ -20,6 +20,7 @@ export default function ExpenseView() {
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">(
     "all",
   );
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   const expenses =
     useLiveQuery(() => {
@@ -84,11 +85,6 @@ export default function ExpenseView() {
     return p ? p.color : null;
   };
 
-  const getIconForDescription = (description: string) => {
-    const { icon: Icon, color } = getSmartIcon(description);
-    return <Icon className={`w-5 h-5 ${color}`} />;
-  };
-
   const formatDate = (ts: string | number) => {
     return new Date(ts).toLocaleDateString("es-ES", {
       day: "2-digit",
@@ -97,10 +93,12 @@ export default function ExpenseView() {
     });
   };
 
-  const totalFiltered = filteredExpenses.reduce(
-    (acc, curr) => acc + curr.amount,
-    0,
-  );
+  const totalExpenses = filteredExpenses
+    .filter((e) => !e.type || e.type === "expense")
+    .reduce((acc, curr) => acc + curr.amount, 0);
+  const totalIncome = filteredExpenses
+    .filter((e) => e.type === "income")
+    .reduce((acc, curr) => acc + curr.amount, 0);
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in zoom-in duration-500">
@@ -110,12 +108,30 @@ export default function ExpenseView() {
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Gastos e Ingresos
           </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            Total mostrado:{" "}
-            <span className="font-bold text-primary-500">
-              ${(totalFiltered / 100).toFixed(2)}
+          <div className="flex flex-wrap items-center gap-3 text-sm mt-1">
+            <span className="text-gray-500 dark:text-gray-400">Gastos:</span>
+            <span className="font-bold text-red-400">
+              -${(totalExpenses / 100).toFixed(2)}
             </span>
-          </p>
+            {totalIncome > 0 && (
+              <>
+                <span className="text-gray-400">·</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  Ingresos:
+                </span>
+                <span className="font-bold text-emerald-500">
+                  +${(totalIncome / 100).toFixed(2)}
+                </span>
+                <span className="text-gray-400">·</span>
+                <span
+                  className={`font-bold ${totalIncome - totalExpenses >= 0 ? "text-emerald-500" : "text-red-400"}`}
+                >
+                  Neto: {totalIncome - totalExpenses >= 0 ? "+" : ""}$
+                  {((totalIncome - totalExpenses) / 100).toFixed(2)}
+                </span>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -179,13 +195,20 @@ export default function ExpenseView() {
               key={exp.id}
               expense={exp}
               onDelete={handleDelete}
-              getIconForTags={() => getIconForDescription(exp.description)}
+              onEdit={(expense) => setEditingExpense(expense)}
               getProjectColor={getProjectColor}
               formatDate={formatDate}
             />
           ))
         )}
       </div>
+
+      {/* Edit Modal */}
+      <EditExpenseModal
+        expense={editingExpense}
+        isOpen={editingExpense !== null}
+        onClose={() => setEditingExpense(null)}
+      />
     </div>
   );
 }

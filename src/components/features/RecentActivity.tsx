@@ -6,10 +6,11 @@ import {
   $currentProject,
   recalculateDailyTotal,
 } from "../../store/appStore";
-import { getSmartIcon } from "../../lib/smart-icons";
+import { getCategoryConfig } from "../../lib/categories";
 import { PiggyBank, CheckCircle2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import EditExpenseModal from "./EditExpenseModal";
 import { showToast } from "../../store/toastStore";
 
 // Helper to format date groups
@@ -46,6 +47,7 @@ export default function RecentActivity() {
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   // Combine query for projects to show dynamic colors
   const projects = useLiveQuery(() => db.projects.toArray(), []) || [];
@@ -97,12 +99,6 @@ export default function RecentActivity() {
       setDeletingId(null);
       setDeleteTarget(null);
     }
-  };
-
-  // Edit Placeholder (For Phase 5 or future implementation)
-  const handleEdit = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    showToast("Función de edición en desarrollo", "info");
   };
 
   // No longer needed — using getSmartIcon from lib/smart-icons.ts
@@ -201,30 +197,24 @@ export default function RecentActivity() {
                 <div
                   key={expense.id}
                   className={`group relative glass p-4 rounded-2xl flex items-center justify-between border border-gray-200/60 dark:border-transparent hover:border-primary-300 dark:hover:border-white/10 hover:shadow-md transition-all cursor-pointer overflow-hidden ${deletingId === expense.id ? "opacity-50 scale-[0.98]" : ""}`}
-                  // @ts-ignore
-                  style={{ viewTransitionName: `expense-${expense.id}` }}
+                  onClick={() => setEditingExpense(expense)}
                 >
                   <div className="flex items-center gap-4 relative z-10">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 dark:bg-white/10`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${projectColor ? "bg-white/10 dark:bg-white/5" : getCategoryConfig(expense.categoryId).bgClass} ${projectColor ? "" : getCategoryConfig(expense.categoryId).textClass}`}
                       style={
                         projectColor
                           ? {
-                              backgroundColor: `${projectColor}33`,
                               color: projectColor,
+                              borderColor: `${projectColor}33`,
+                              borderWidth: "2px",
                             }
                           : {}
                       }
                     >
                       {(() => {
-                        const { icon: SmartIcon, color } = getSmartIcon(
-                          expense.description,
-                        );
-                        return (
-                          <SmartIcon
-                            className={`w-5 h-5 ${projectColor ? "" : color}`}
-                          />
-                        );
+                        const Icon = getCategoryConfig(expense.categoryId).icon;
+                        return <Icon className="w-5 h-5" />;
                       })()}
                     </div>
 
@@ -279,7 +269,10 @@ export default function RecentActivity() {
 
                   <div className="flex items-center gap-3 relative z-10">
                     <div className="text-right">
-                      <span className="font-bold text-gray-900 dark:text-white block">
+                      <span
+                        className={`font-bold block ${expense.type === "income" ? "text-emerald-500" : "text-gray-900 dark:text-white"}`}
+                      >
+                        {expense.type === "income" ? "+" : ""}
                         {expense.currency === "EUR" ? "€" : "$"}
                         {(expense.amount / 100).toFixed(2)}
                       </span>
@@ -302,6 +295,13 @@ export default function RecentActivity() {
           </div>
         </div>
       ))}
+
+      {/* Edit Modal */}
+      <EditExpenseModal
+        expense={editingExpense}
+        isOpen={editingExpense !== null}
+        onClose={() => setEditingExpense(null)}
+      />
     </div>
   );
 }
