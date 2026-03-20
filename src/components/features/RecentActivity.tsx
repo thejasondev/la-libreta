@@ -1,11 +1,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Expense } from "../../lib/db";
 import { useStore } from "@nanostores/react";
-import {
-  $isProfessionalMode,
-  $currentProject,
-  recalculateDailyTotal,
-} from "../../store/appStore";
+import { $isBusinessMode, recalculateDailyTotal } from "../../store/appStore";
 import { getCategoryConfig } from "../../lib/categories";
 import { PiggyBank, CheckCircle2, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -42,8 +38,7 @@ const getRelativeDateGroup = (dateString: string) => {
 };
 
 export default function RecentActivity() {
-  const isProMode = useStore($isProfessionalMode);
-  const currentProject = useStore($currentProject);
+  const isBizMode = useStore($isBusinessMode);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -62,25 +57,10 @@ export default function RecentActivity() {
     let query = db.expenses.orderBy("date").reverse();
 
     // Isolation core filter
-    const collection = query.filter((exp) => exp.isProfessional === isProMode);
+    const collection = query.filter((exp) => exp.isBusiness === isBizMode);
 
-    if (isProMode) {
-      if (currentProject) {
-        return collection
-          .filter((exp) => exp.projectId === currentProject.id)
-          .limit(30)
-          .toArray();
-      }
-      // If Pro Mode but no project, show "general" professional expenses
-      return collection
-        .filter((exp) => !exp.projectId)
-        .limit(30)
-        .toArray();
-    }
-
-    // Personal mode: just show all recent personal expenses
     return collection.limit(30).toArray();
-  }, [isProMode, currentProject]);
+  }, [isBizMode]);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -131,23 +111,23 @@ export default function RecentActivity() {
       <div className="flex flex-col items-center justify-center py-12 px-4 text-center glass rounded-3xl border-dashed border-2 border-gray-200 dark:border-white/10">
         <div
           className={`w-16 h-16 mb-4 flex items-center justify-center rounded-full ${
-            isProMode
-              ? "text-amber-200 dark:text-amber-900/50 bg-amber-50 dark:bg-amber-500/10"
+            isBizMode
+              ? "text-teal-200 dark:text-teal-900/50 bg-teal-50 dark:bg-teal-500/10"
               : "text-teal-200 dark:text-teal-900/50 bg-teal-50 dark:bg-white/5"
           }`}
         >
           <PiggyBank
-            className={`w-8 h-8 ${isProMode ? "text-amber-500" : "text-teal-400"}`}
+            className={`w-8 h-8 ${isBizMode ? "text-teal-500" : "text-teal-400"}`}
           />
         </div>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
-          {isProMode
-            ? "Aún no hay gastos en este proyecto"
+          {isBizMode
+            ? "No hay movimientos en tu negocio"
             : "¡Tus finanzas están limpias!"}
         </h3>
         <p className="text-sm text-gray-500 max-w-xs">
-          {isProMode
-            ? "Añade gastos empresariales arriba para que comiencen a aparecer aquí."
+          {isBizMode
+            ? "Registra costos y ventas para que comiencen a aparecer aquí."
             : "No se registran gastos recientes. Genial para tus ahorros."}
         </p>
       </div>
@@ -176,7 +156,7 @@ export default function RecentActivity() {
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-6">
         <h2 className="text-lg font-bold">Actividad Reciente</h2>
         <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-white/5 rounded-lg text-gray-500">
           Últimos {expenses.length}
@@ -249,18 +229,6 @@ export default function RecentActivity() {
                               <CheckCircle2 className="w-3 h-3" />
                               Reembolsado
                             </span>
-                          </>
-                        )}
-
-                        {/* Project Name Badge indicator for Pro Mode views */}
-                        {isProMode && projectColor && (
-                          <>
-                            <span>•</span>
-                            <span
-                              className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: projectColor }}
-                              title="Proyecto Asignado"
-                            ></span>
                           </>
                         )}
                       </div>

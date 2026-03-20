@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db } from "../../lib/db";
 import { useStore } from "@nanostores/react";
 import {
-  $isProfessionalMode,
+  $isBusinessMode,
   $darkMode,
   recalculateDailyTotal,
 } from "../../store/appStore";
@@ -20,7 +20,7 @@ import ConfirmDialog from "../ui/ConfirmDialog";
 import { CATEGORIES } from "../../lib/categories";
 
 export default function SettingsView() {
-  const isProMode = useStore($isProfessionalMode);
+  const isBizMode = useStore($isBusinessMode);
   const isDarkMode = useStore($darkMode);
 
   const [showImportConfirm, setShowImportConfirm] = useState(false);
@@ -28,6 +28,11 @@ export default function SettingsView() {
   const [showNukeStep2, setShowNukeStep2] = useState(false);
   const [nukeInput, setNukeInput] = useState("");
   const [pendingImportData, setPendingImportData] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const toggleDarkMode = () => {
     $darkMode.set(!isDarkMode);
@@ -97,7 +102,7 @@ export default function SettingsView() {
           (exp.amount / 100).toFixed(2),
           exp.currency,
           catLabel,
-          exp.isProfessional ? "Sí" : "No",
+          exp.isBusiness ? "Sí" : "No",
           exp.isReimbursable ? "Sí" : "No",
         ].join(",");
       });
@@ -295,37 +300,31 @@ export default function SettingsView() {
         </div>
         <div className="p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div
-              className={`p-2 rounded-xl ${isDarkMode ? "bg-teal-500/20 text-teal-400" : "bg-amber-500/20 text-amber-500"}`}
-            >
-              {isDarkMode ? (
-                <Moon className="w-5 h-5" />
-              ) : (
-                <Sun className="w-5 h-5" />
-              )}
+            <div className={`p-2 rounded-xl bg-teal-500/10 text-teal-500`}>
+              <Moon className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-medium dark:text-white">
-                {isDarkMode ? "Modo Oscuro" : "Modo Claro"}
-              </p>
+              <p className="font-medium dark:text-white">Modo Oscuro</p>
               <p className="text-xs text-gray-500">
-                {isDarkMode
-                  ? "Interfaz oscura para uso nocturno"
-                  : "Interfaz clara para uso al sol"}
+                Interfaz oscura para uso nocturno o interior
               </p>
             </div>
           </div>
-          <button
-            onClick={toggleDarkMode}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${isDarkMode ? "bg-primary-500" : "bg-gray-300"}`}
-            title={
-              isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"
-            }
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDarkMode ? "translate-x-6" : "translate-x-1"}`}
-            />
-          </button>
+          {isMounted ? (
+            <button
+              onClick={toggleDarkMode}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${isDarkMode ? "bg-primary-500" : "bg-gray-300 dark:bg-white/10"}`}
+              title={
+                isDarkMode ? "Desactivar modo oscuro" : "Activar modo oscuro"
+              }
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDarkMode ? "translate-x-6" : "translate-x-1"}`}
+              />
+            </button>
+          ) : (
+            <div className="h-6 w-11 rounded-full bg-gray-200 dark:bg-white/5 animate-pulse" />
+          )}
         </div>
       </section>
 

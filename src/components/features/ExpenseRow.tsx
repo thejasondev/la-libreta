@@ -7,7 +7,6 @@ interface ExpenseRowProps {
   expense: Expense;
   onDelete: (id: string) => void;
   onEdit?: (expense: Expense) => void;
-  getProjectColor?: (projectId?: string) => string | null;
   formatDate: (ts: string | number) => string;
 }
 
@@ -15,7 +14,6 @@ export default function ExpenseRow({
   expense,
   onDelete,
   onEdit,
-  getProjectColor,
   formatDate,
 }: ExpenseRowProps) {
   const [offset, setOffset] = useState(0);

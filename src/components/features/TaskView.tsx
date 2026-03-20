@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Task } from "../../lib/db";
 import { useStore } from "@nanostores/react";
-import { $isProfessionalMode, $currentProject } from "../../store/appStore";
+import { $isBusinessMode } from "../../store/appStore";
 import {
   CheckCircle2,
   Circle,
@@ -13,8 +13,7 @@ import {
 import ConfirmDialog from "../ui/ConfirmDialog";
 
 export default function TaskView() {
-  const isProMode = useStore($isProfessionalMode);
-  const currentProject = useStore($currentProject);
+  const isBizMode = useStore($isBusinessMode);
 
   const allTasks =
     useLiveQuery(() => {
@@ -22,13 +21,11 @@ export default function TaskView() {
         .orderBy("createdAt")
         .reverse()
         .filter((t) => {
-          if (t.isProfessional !== isProMode) return false;
-          if (isProMode && currentProject && t.projectId !== currentProject.id)
-            return false;
+          if (t.isBusiness !== isBizMode) return false;
           return true;
         })
         .toArray();
-    }, [isProMode, currentProject]) || [];
+    }, [isBizMode]) || [];
 
   const handleToggle = async (task: Task) => {
     await db.tasks.update(task.id, { completed: !task.completed });
@@ -150,20 +147,20 @@ export default function TaskView() {
       <ConfirmDialog
         isOpen={showDeleteAll}
         title={
-          isProMode
+          isBizMode
             ? "Limpiar tareas profesionales"
             : "Limpiar tareas personales"
         }
         message={`¿Eliminar las ${completedTasks.length} tareas completadas? Esta acción no se puede deshacer.`}
         confirmLabel="Eliminar todas"
-        variant={isProMode ? "warning" : "danger"}
+        variant={isBizMode ? "warning" : "danger"}
         onConfirm={confirmDeleteAll}
         onCancel={() => setShowDeleteAll(false)}
       />
       <div>
         <h2 className="text-2xl font-bold dark:text-white mb-1">Mis Tareas</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {isProMode
+          {isBizMode
             ? currentProject
               ? `Proyecto: ${currentProject.name}`
               : "Tareas profesionales generales"

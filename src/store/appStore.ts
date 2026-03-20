@@ -5,7 +5,7 @@ import type { Project } from "../lib/db";
 export const $currentProject = atom<Project | null>(null);
 export const $isSyncing = atom<boolean>(false);
 export const $dailyTotal = atom<number>(0);
-export const $isProfessionalMode = atom<boolean>(false);
+export const $isBusinessMode = atom<boolean>(false);
 export const $personalBudget = atom<number>(0);
 export const $darkMode = atom<boolean>(true);
 
@@ -23,7 +23,6 @@ onMount($darkMode, () => {
       $darkMode.set(isDark);
       applyDarkMode(isDark);
     } else {
-      // Default to system preference
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)",
       ).matches;
@@ -52,25 +51,33 @@ function applyDarkMode(isDark: boolean) {
   }
 }
 
-// Persist Professional Mode across sessions via localStorage
-onMount($isProfessionalMode, () => {
+// Persist Business Mode across sessions via localStorage
+onMount($isBusinessMode, () => {
   if (typeof window !== "undefined") {
-    const savedMode = localStorage.getItem("laLibreta_isProMode");
+    // Migrate old key if it exists
+    const oldKey = localStorage.getItem("laLibreta_isProMode");
+    if (oldKey !== null) {
+      localStorage.setItem("laLibreta_isBusinessMode", oldKey);
+      localStorage.removeItem("laLibreta_isProMode");
+    }
+
+    const savedMode = localStorage.getItem("laLibreta_isBusinessMode");
     if (savedMode !== null) {
-      const isPro = savedMode === "true";
-      $isProfessionalMode.set(isPro);
-      if (isPro) document.documentElement.classList.add("theme-pro");
-      else document.documentElement.classList.remove("theme-pro");
+      const isBiz = savedMode === "true";
+      $isBusinessMode.set(isBiz);
+      if (isBiz) document.documentElement.classList.add("theme-biz");
+      else document.documentElement.classList.remove("theme-biz");
     }
   }
 
-  const unsubscribe = $isProfessionalMode.listen((isPro) => {
+  const unsubscribe = $isBusinessMode.listen((isBiz) => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("laLibreta_isProMode", String(isPro));
-      if (isPro) document.documentElement.classList.add("theme-pro");
-      else document.documentElement.classList.remove("theme-pro");
+      localStorage.setItem("laLibreta_isBusinessMode", String(isBiz));
+      if (isBiz) document.documentElement.classList.add("theme-biz");
+      else document.documentElement.classList.remove("theme-biz");
+      // Notify Astro pages of mode change
+      window.dispatchEvent(new CustomEvent("businessModeChanged"));
     }
-    // Recalculate totals when mode changes
     recalculateDailyTotal();
   });
 
@@ -105,15 +112,17 @@ export async function recalculateDailyTotal() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayISO = today.toISOString();
-    const isPro = $isProfessionalMode.get();
+    const isBiz = $isBusinessMode.get();
 
     const expensesToday = await db.expenses
       .where("date")
       .aboveOrEqual(todayISO)
-      .filter((exp) => exp.isProfessional === isPro)
+      .filter((exp) => exp.isBusiness === isBiz)
       .toArray();
 
-    const totalCents = expensesToday.reduce((sum, exp) => sum + exp.amount, 0);
+    const totalCents = expensesToday
+      .filter((exp) => !exp.type || exp.type === "expense")
+      .reduce((sum, exp) => sum + exp.amount, 0);
     $dailyTotal.set(totalCents);
   } catch (error) {
     console.error("Failed to calculate daily total", error);

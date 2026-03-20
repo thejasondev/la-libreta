@@ -1,24 +1,46 @@
 import { useStore } from "@nanostores/react";
-import { $isProfessionalMode } from "../../store/appStore";
+import { $isBusinessMode } from "../../store/appStore";
 import {
   Home,
   CheckSquare,
   DollarSign,
-  Briefcase,
+  ShoppingCart,
+  Package,
   Settings,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
-const allNavItems = [
-  { path: "/", label: "Inicio", icon: Home, proOnly: false },
-  { path: "/tareas", label: "Tareas", icon: CheckSquare, proOnly: false },
-  { path: "/gastos", label: "Gastos", icon: DollarSign, proOnly: false },
-  { path: "/proyectos", label: "Proyectos", icon: Briefcase, proOnly: true },
-  { path: "/ajustes", label: "Ajustes", icon: Settings, proOnly: false },
+type NavItem = {
+  path: string;
+  label: string;
+  icon: typeof Home;
+  bizLabel?: string;
+  bizIcon?: typeof Home;
+  showIn: "all" | "personal" | "business";
+};
+
+const allNavItems: NavItem[] = [
+  { path: "/", label: "Inicio", icon: Home, showIn: "all" },
+  { path: "/tareas", label: "Tareas", icon: CheckSquare, showIn: "personal" },
+  {
+    path: "/gastos",
+    label: "Gastos",
+    icon: DollarSign,
+    bizLabel: "Ventas",
+    bizIcon: ShoppingCart,
+    showIn: "all",
+  },
+  {
+    path: "/inventario",
+    label: "Inventario",
+    icon: Package,
+    showIn: "business",
+  },
+  { path: "/ajustes", label: "Ajustes", icon: Settings, showIn: "all" },
 ];
 
 export default function Navigation() {
-  const isProMode = useStore($isProfessionalMode);
+  const isBizMode = useStore($isBusinessMode);
   const [currentPath, setCurrentPath] = useState("/");
 
   useEffect(() => {
@@ -36,7 +58,12 @@ export default function Navigation() {
     };
   }, []);
 
-  const visibleItems = allNavItems.filter((item) => !item.proOnly || isProMode);
+  const visibleItems = allNavItems.filter((item) => {
+    if (item.showIn === "all") return true;
+    if (item.showIn === "business") return isBizMode;
+    if (item.showIn === "personal") return !isBizMode;
+    return false;
+  });
 
   const isActive = (path: string) => {
     if (path === "/") return currentPath === "/";
@@ -54,12 +81,15 @@ export default function Navigation() {
             shadow-lg shadow-black/8 dark:shadow-black/40
             border border-gray-200/80 dark:border-teal-700/15"
         >
-          {visibleItems.map(({ path, label, icon: Icon }) => {
-            const active = isActive(path);
+          {visibleItems.map((item) => {
+            const Icon = isBizMode && item.bizIcon ? item.bizIcon : item.icon;
+            const label =
+              isBizMode && item.bizLabel ? item.bizLabel : item.label;
+            const active = isActive(item.path);
             return (
               <a
-                key={path}
-                href={path}
+                key={item.path}
+                href={item.path}
                 data-astro-prefetch
                 className={`relative flex flex-col items-center justify-center px-4 py-1.5 rounded-xl transition-all duration-200 ${
                   active
@@ -108,12 +138,15 @@ export default function Navigation() {
           </a>
 
           {/* Nav Items */}
-          {visibleItems.map(({ path, label, icon: Icon }) => {
-            const active = isActive(path);
+          {visibleItems.map((item) => {
+            const Icon = isBizMode && item.bizIcon ? item.bizIcon : item.icon;
+            const label =
+              isBizMode && item.bizLabel ? item.bizLabel : item.label;
+            const active = isActive(item.path);
             return (
               <a
-                key={path}
-                href={path}
+                key={item.path}
+                href={item.path}
                 data-astro-prefetch
                 className={`flex items-center gap-3 px-4 py-2.5 w-full rounded-xl transition-all ${
                   active
@@ -131,12 +164,12 @@ export default function Navigation() {
           <div className="mt-auto mb-6 px-4 w-full">
             <div
               className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold text-center uppercase tracking-wider ${
-                isProMode
-                  ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                isBizMode
+                  ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20"
                   : "bg-primary-500/10 text-primary-500 border border-primary-500/20"
               }`}
             >
-              {isProMode ? "Modo Profesional" : "Modo Personal"}
+              {isBizMode ? "Modo Negocio" : "Modo Personal"}
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ export interface Task {
   title: string;
   completed: boolean;
   priority: "low" | "medium" | "high";
-  isProfessional: boolean;
+  isBusiness: boolean;
   projectId?: string;
   dueDate?: string;
   categoryId?: string;
@@ -22,17 +22,46 @@ export interface Expense {
   date: string;
   categoryId?: string;
   projectId?: string;
-  isProfessional: boolean;
+  isBusiness: boolean;
   isReimbursable: boolean;
   status: "pending" | "paid";
   createdAt: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  price: number; // sell price in cents
+  cost: number; // cost/buy price in cents
+  stock: number; // current stock (0 for services)
+  unit: "producto" | "servicio" | "hora";
+  categoryId?: string;
+  isActive: boolean;
+  createdAt: number;
+}
+
+export interface Sale {
+  id: string;
+  items: SaleItem[];
+  total: number; // total in cents
+  paymentMethod: "efectivo" | "transferencia" | "tarjeta";
+  customerName?: string;
+  date: string;
+  createdAt: number;
+}
+
+export interface SaleItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  unitPrice: number; // price per unit in cents
 }
 
 export interface Project {
   id: string;
   name: string;
   client?: string;
-  budgetLimit: number; // In cents
+  budgetLimit: number;
   color: string;
   createdAt: number;
 }
@@ -41,6 +70,8 @@ export class LaLibretaDB extends Dexie {
   tasks!: EntityTable<Task, "id">;
   expenses!: EntityTable<Expense, "id">;
   projects!: EntityTable<Project, "id">;
+  products!: EntityTable<Product, "id">;
+  sales!: EntityTable<Sale, "id">;
 
   constructor() {
     super("LaLibretaDB");
@@ -53,7 +84,7 @@ export class LaLibretaDB extends Dexie {
       projects: "id, name, createdAt",
     });
 
-    // Version 2: Added isProfessional to expenses + tasks, tags to expenses, client to projects
+    // Version 2: Added isProfessional to expenses + tasks
     this.version(2)
       .stores({
         tasks:
@@ -63,7 +94,6 @@ export class LaLibretaDB extends Dexie {
         projects: "id, name, createdAt",
       })
       .upgrade((tx) => {
-        // Migrate existing expenses: add isProfessional=false, tags=[] where missing
         tx.table("expenses")
           .toCollection()
           .modify((expense) => {
@@ -75,7 +105,6 @@ export class LaLibretaDB extends Dexie {
             }
           });
 
-        // Migrate existing tasks: add isProfessional=false where missing
         tx.table("tasks")
           .toCollection()
           .modify((task) => {
@@ -84,7 +113,6 @@ export class LaLibretaDB extends Dexie {
             }
           });
 
-        // Migrate existing projects: rename budgetLimitCents -> budgetLimit, remove spentAmount
         tx.table("projects")
           .toCollection()
           .modify((project) => {
@@ -104,7 +132,7 @@ export class LaLibretaDB extends Dexie {
           });
       });
 
-    // Version 3: Added type field to expenses (expense | income)
+    // Version 3: Added type field to expenses
     this.version(3)
       .stores({
         tasks:
@@ -119,6 +147,45 @@ export class LaLibretaDB extends Dexie {
           .modify((expense) => {
             if (!expense.type) {
               expense.type = "expense";
+            }
+          });
+      });
+
+    // Version 4: Business Mode — rename isProfessional→isBusiness, add products & sales tables
+    this.version(4)
+      .stores({
+        tasks:
+          "id, title, completed, priority, isBusiness, projectId, dueDate, categoryId, createdAt",
+        expenses:
+          "id, type, date, amount, currency, categoryId, projectId, isBusiness, isReimbursable, status, createdAt",
+        projects: "id, name, createdAt",
+        products: "id, name, price, cost, stock, unit, isActive, createdAt",
+        sales: "id, date, total, paymentMethod, createdAt",
+      })
+      .upgrade((tx) => {
+        // Migrate expenses: isProfessional → isBusiness
+        tx.table("expenses")
+          .toCollection()
+          .modify((expense) => {
+            if (expense.isProfessional !== undefined) {
+              expense.isBusiness = expense.isProfessional;
+              delete expense.isProfessional;
+            }
+            if (expense.isBusiness === undefined) {
+              expense.isBusiness = false;
+            }
+          });
+
+        // Migrate tasks: isProfessional → isBusiness
+        tx.table("tasks")
+          .toCollection()
+          .modify((task) => {
+            if (task.isProfessional !== undefined) {
+              task.isBusiness = task.isProfessional;
+              delete task.isProfessional;
+            }
+            if (task.isBusiness === undefined) {
+              task.isBusiness = false;
             }
           });
       });

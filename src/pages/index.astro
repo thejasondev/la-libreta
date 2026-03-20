@@ -14,8 +14,8 @@ import RecentActivity from '../components/features/RecentActivity';
     <!-- The Dashboard Bento Grid (Widgets A, B, C) -->
     <Dashboard client:load />
 
-    <!-- Quick Entry Section -->
-    <section class="mb-10 w-full animate-in slide-in-from-bottom-4 duration-500">
+    <!-- Quick Entry Section (Personal mode only — Business uses /gastos as POS) -->
+    <section class="mb-10 w-full animate-in slide-in-from-bottom-4 duration-500" id="quick-entry-section">
       <QuickEntry client:load />
     </section>
 
@@ -26,3 +26,19 @@ import RecentActivity from '../components/features/RecentActivity';
 
   </div>
 </Layout>
+
+<script>
+  // Hide QuickEntry in Business mode — dashboard is analytics-only
+  function updateQuickEntryVisibility() {
+    const section = document.getElementById('quick-entry-section');
+    if (!section) return;
+    const isBiz = localStorage.getItem('laLibreta_isBusinessMode') === 'true';
+    section.style.display = isBiz ? 'none' : '';
+  }
+  updateQuickEntryVisibility();
+  document.addEventListener('astro:after-swap', updateQuickEntryVisibility);
+  // Listen for mode changes
+  window.addEventListener('storage', updateQuickEntryVisibility);
+  // Custom event for same-tab mode changes
+  window.addEventListener('businessModeChanged', updateQuickEntryVisibility);
+</script>

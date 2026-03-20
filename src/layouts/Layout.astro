@@ -60,11 +60,15 @@ const {
           document.documentElement.classList.remove('dark');
         }
 
-        var isPro = localStorage.getItem('laLibreta_isProMode');
-        if (isPro === 'true') {
-          document.documentElement.classList.add('theme-pro');
+        var isBiz = localStorage.getItem('laLibreta_isBusinessMode');
+        // Also check old key for migration
+        if (isBiz === null) {
+          isBiz = localStorage.getItem('laLibreta_isProMode');
+        }
+        if (isBiz === 'true') {
+          document.documentElement.classList.add('theme-biz');
         } else {
-          document.documentElement.classList.remove('theme-pro');
+          document.documentElement.classList.remove('theme-biz');
         }
       }
 
@@ -77,9 +81,9 @@ const {
       // Also preserve classes during the swap itself
       document.addEventListener('astro:before-swap', function(e) {
         var isDark = document.documentElement.classList.contains('dark');
-        var isPro = document.documentElement.classList.contains('theme-pro');
+        var isBiz = document.documentElement.classList.contains('theme-biz');
         if (isDark) e.newDocument.documentElement.classList.add('dark');
-        if (isPro) e.newDocument.documentElement.classList.add('theme-pro');
+        if (isBiz) e.newDocument.documentElement.classList.add('theme-biz');
       });
     </script>
 

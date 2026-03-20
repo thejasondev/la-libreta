@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { db } from "../../lib/db";
-import { $currentProject, $isProfessionalMode } from "../../store/appStore";
+import { $currentProject, $isBusinessMode } from "../../store/appStore";
 import { useStore } from "@nanostores/react";
 import { Plus, AlertTriangle, ArrowDown, Minus } from "lucide-react";
 import { showToast } from "../../store/toastStore";
@@ -32,7 +32,7 @@ export default function TaskInput() {
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
   const activeProject = useStore($currentProject);
-  const isProMode = useStore($isProfessionalMode);
+  const isBizMode = useStore($isBusinessMode);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +44,8 @@ export default function TaskInput() {
         title: title.trim(),
         completed: false,
         priority,
-        isProfessional: isProMode,
-        projectId: isProMode && activeProject ? activeProject.id : undefined,
+        isBusiness: isBizMode,
+        projectId: undefined,
         dueDate: new Date().toISOString(),
         createdAt: Date.now(),
       });
