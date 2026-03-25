@@ -1,14 +1,4 @@
 import { useMemo } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
 import type { Sale } from "../../../lib/db";
 
 interface TopEarnersChartProps {
@@ -29,84 +19,64 @@ export default function TopEarnersChart({ sales }: TopEarnersChartProps) {
 
     return Object.entries(totals)
       .map(([name, data]) => ({
-        name: name.length > 20 ? name.substring(0, 20) + "..." : name,
-        fullName: name,
+        name,
         value: data.total,
         quantity: data.quantity,
       }))
       .filter((item) => item.value > 0)
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5); // top 5
+      .slice(0, 5);
   }, [sales]);
 
   if (chartData.length === 0) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 min-h-[250px]">
+      <div className="w-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 min-h-[200px]">
         <p className="text-sm font-medium">No hay ventas registradas</p>
       </div>
     );
   }
 
-  // Emerald colors that fit the app theme
-  const colors = ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5"];
+  const maxValue = chartData[0].value;
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-white/95 dark:bg-teal-950/95 backdrop-blur-sm p-4 rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] border border-gray-100 dark:border-white/5 font-bold text-sm">
-          <p className="mb-1 text-gray-900 dark:text-white">{data.fullName}</p>
-          <p className="text-emerald-500 font-black text-xl">
-            ${data.value.toFixed(2)}
-          </p>
-          <p className="text-gray-500 dark:text-gray-400 mt-1 text-xs font-semibold uppercase tracking-wider">
-            {data.quantity}{" "}
-            {data.quantity === 1 ? "venta / brindado" : "ventas / brindados"}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
+  // Teal gradient that matches the app primary
+  const barColors = [
+    "bg-primary-500",
+    "bg-primary-400",
+    "bg-primary-300",
+    "bg-primary-200",
+    "bg-primary-100",
+  ];
 
   return (
-    <div className="w-full h-[250px] mt-4">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={chartData}
-          layout="vertical"
-          margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
-        >
-          <CartesianGrid
-            strokeDasharray="3 3"
-            horizontal={true}
-            vertical={false}
-            stroke="#e5e7eb"
-            strokeOpacity={0.2}
-          />
-          <XAxis type="number" hide />
-          <YAxis
-            dataKey="name"
-            type="category"
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: "#6b7280", fontSize: 12, fontWeight: 500 }}
-            width={110}
-          />
-          <Tooltip
-            content={<CustomTooltip />}
-            cursor={{ fill: "var(--color-primary-50)", opacity: 0.1 }}
-          />
-          <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
-            {chartData.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={colors[index % colors.length]}
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="flex flex-col gap-4 mt-2">
+      {chartData.map((item, index) => {
+        const pct = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
+        return (
+          <div key={item.name} className="flex flex-col gap-1.5">
+            {/* Row: Name + Amount */}
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                {item.name}
+              </span>
+              <span className="text-sm font-black text-emerald-500 shrink-0 tabular-nums">
+                ${item.value.toFixed(2)}
+              </span>
+            </div>
+            {/* Bar + volume */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-6 bg-gray-100 dark:bg-white/5 rounded-lg overflow-hidden">
+                <div
+                  className={`h-full rounded-lg ${barColors[index] || barColors[barColors.length - 1]} transition-all duration-500 ease-out`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-bold text-gray-400 dark:text-gray-500 w-16 text-right shrink-0 tabular-nums">
+                {item.quantity} {item.quantity === 1 ? "venta" : "ventas"}
+              </span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

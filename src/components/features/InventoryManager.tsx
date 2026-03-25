@@ -18,6 +18,12 @@ import {
   PackagePlus,
 } from "lucide-react";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import {
+  type Currency,
+  CURRENCIES,
+  CURRENCY_LIST,
+  formatAmount,
+} from "../../lib/currency";
 
 type UnitType = "producto" | "servicio" | "hora";
 
@@ -53,6 +59,7 @@ export default function InventoryManager() {
   const [cost, setCost] = useState("");
   const [stock, setStock] = useState("");
   const [unit, setUnit] = useState<UnitType>("producto");
+  const [productCurrency, setProductCurrency] = useState<Currency>("CUP");
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // Restock
@@ -103,6 +110,7 @@ export default function InventoryManager() {
           name: name.trim(),
           price: priceCents,
           cost: costCents,
+          currency: productCurrency,
           stock: stockNum,
           unit,
         });
@@ -115,6 +123,7 @@ export default function InventoryManager() {
           name: name.trim(),
           price: priceCents,
           cost: costCents,
+          currency: productCurrency,
           stock: stockNum,
           unit,
           isActive: true,
@@ -127,7 +136,7 @@ export default function InventoryManager() {
           await db.expenses.add({
             id: crypto.randomUUID(),
             amount: totalCost,
-            currency: "CUP",
+            currency: productCurrency,
             description: `Compra: ${name.trim()} (x${stockNum})`,
             type: "expense",
             date: new Date().toISOString(),
@@ -141,7 +150,7 @@ export default function InventoryManager() {
           });
           await recalculateDailyTotal();
           showToast(
-            `Producto agregado + compra registrada: $${(totalCost / 100).toFixed(2)}`,
+            `Producto agregado + compra registrada: ${formatAmount(totalCost, productCurrency)}`,
             "success",
           );
         } else {
@@ -160,6 +169,7 @@ export default function InventoryManager() {
     setPrice("");
     setCost("");
     setStock("");
+    setProductCurrency("CUP");
     setShowForm(false);
     setEditingId(null);
   };
@@ -169,6 +179,7 @@ export default function InventoryManager() {
     setPrice((product.price / 100).toString());
     setCost((product.cost / 100).toString());
     setStock(product.stock.toString());
+    setProductCurrency(product.currency || "CUP");
     setEditingId(product.id);
     setShowForm(true);
     setRestockId(null);
@@ -214,7 +225,7 @@ export default function InventoryManager() {
       await db.expenses.add({
         id: crypto.randomUUID(),
         amount: totalCost,
-        currency: "CUP",
+        currency: product.currency || "CUP",
         description: `Compra: ${product.name} (x${qty})`,
         type: "expense",
         date: new Date().toISOString(),
@@ -229,7 +240,7 @@ export default function InventoryManager() {
 
       await recalculateDailyTotal();
       showToast(
-        `Stock +${qty} · Compra registrada: $${(totalCost / 100).toFixed(2)}`,
+        `Stock +${qty} · Compra registrada: ${formatAmount(totalCost, product.currency || "CUP")}`,
         "success",
       );
       setRestockId(null);
@@ -388,6 +399,24 @@ export default function InventoryManager() {
             </div>
           </div>
 
+          {/* Currency selector */}
+          <div className="col-span-full flex items-center bg-gray-50 dark:bg-teal-900/40 rounded-xl border border-gray-200/60 dark:border-white/8 overflow-hidden w-fit">
+            {CURRENCY_LIST.map((cur) => (
+              <button
+                key={cur}
+                type="button"
+                onClick={() => setProductCurrency(cur)}
+                className={`flex items-center gap-1 px-3 py-2 text-xs font-bold transition-all ${
+                  productCurrency === cur
+                    ? "bg-primary-500 text-white"
+                    : "text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                }`}
+              >
+                <span>{CURRENCIES[cur].flag}</span>
+                {cur}
+              </button>
+            ))}
+          </div>
           {/* Purchase info hint */}
           {!editingId &&
             parseInt(stock || "0") > 0 &&
@@ -395,12 +424,19 @@ export default function InventoryManager() {
               <div className="bg-blue-50 dark:bg-blue-500/5 px-4 py-2.5 rounded-xl text-xs text-blue-700 dark:text-blue-300 border border-blue-500/20">
                 💡 Se registrará una compra de{" "}
                 <strong>
-                  $
-                  {(parseFloat(cost || "0") * parseInt(stock || "0")).toFixed(
-                    2,
+                  {formatAmount(
+                    Math.round(
+                      parseFloat(cost || "0") * parseInt(stock || "0") * 100,
+                    ),
+                    productCurrency,
                   )}
                 </strong>{" "}
-                ({stock} uds × ${parseFloat(cost || "0").toFixed(2)} c/u)
+                ({stock} uds ×{" "}
+                {formatAmount(
+                  Math.round(parseFloat(cost || "0") * 100),
+                  productCurrency,
+                )}{" "}
+                c/u)
               </div>
             )}
 
@@ -487,7 +523,10 @@ export default function InventoryManager() {
                         </div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-xs text-gray-500">
                           <span className="font-bold text-emerald-500">
-                            ${(product.price / 100).toFixed(2)}
+                            {formatAmount(
+                              product.price,
+                              product.currency || "CUP",
+                            )}
                           </span>
                           {product.cost > 0 && (
                             <>
@@ -495,7 +534,11 @@ export default function InventoryManager() {
                                 ·
                               </span>
                               <span>
-                                Costo: ${(product.cost / 100).toFixed(2)}
+                                Costo:{" "}
+                                {formatAmount(
+                                  product.cost,
+                                  product.currency || "CUP",
+                                )}
                               </span>
                               <span className="hidden sm:inline text-gray-300 dark:text-gray-600">
                                 ·

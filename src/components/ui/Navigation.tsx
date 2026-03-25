@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Package,
   Settings,
+  Wallet,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -30,6 +31,7 @@ const allNavItems: NavItem[] = [
     bizIcon: ShoppingCart,
     showIn: "all",
   },
+  { path: "/ahorros", label: "Ahorros", icon: Wallet, showIn: "personal" },
   {
     path: "/inventario",
     label: "Inventario",

@@ -12,8 +12,16 @@ import {
   Banknote,
   Smartphone,
   Trash2,
+  Calendar,
+  History,
 } from "lucide-react";
 import { showToast } from "../../store/toastStore";
+import {
+  type Currency,
+  CURRENCIES,
+  CURRENCY_LIST,
+  formatAmount,
+} from "../../lib/currency";
 
 type UnitFilter = "all" | "producto" | "servicio" | "hora";
 type PaymentMethod = "efectivo" | "transferencia";
@@ -42,9 +50,11 @@ export default function SalesPanel() {
   const [customPrice, setCustomPrice] = useState("");
   const [customDesc, setCustomDesc] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("efectivo");
+  const [saleCurrency, setSaleCurrency] = useState<Currency>("CUP");
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const pickerRef = useRef<HTMLDivElement>(null);
+  const [historyTab, setHistoryTab] = useState<"today" | "history">("today");
 
   // Load active products
   const activeProducts = useLiveQuery(
@@ -69,6 +79,36 @@ export default function SalesPanel() {
   );
 
   const todayTotal = todaySales.reduce((sum, s) => sum + s.total, 0);
+
+  // All sales (for history)
+  const allSales = useLiveQuery(
+    () => db.sales.orderBy("date").reverse().limit(100).toArray(),
+    [],
+    [],
+  );
+
+  // Group past sales by date
+  const pastSales = allSales.filter((s) => {
+    const saleDate = new Date(s.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return saleDate < today;
+  });
+
+  const groupedHistory = pastSales.reduce(
+    (groups, sale) => {
+      const d = new Date(sale.date);
+      const label = d.toLocaleDateString("es-ES", {
+        weekday: "long",
+        day: "numeric",
+        month: "short",
+      });
+      if (!groups[label]) groups[label] = [];
+      groups[label].push(sale);
+      return groups;
+    },
+    {} as Record<string, Sale[]>,
+  );
 
   // Filter products by unit type and search
   const filteredProducts = activeProducts.filter((p) => {
@@ -98,6 +138,7 @@ export default function SalesPanel() {
     setSelectedProduct(product);
     setCustomDesc(product.name);
     setCustomPrice((product.price / 100).toFixed(2));
+    setSaleCurrency(product.currency || "CUP");
     setShowProductPicker(false);
     setProductSearch("");
   };
@@ -137,6 +178,7 @@ export default function SalesPanel() {
           },
         ],
         total,
+        currency: saleCurrency,
         paymentMethod,
         date: now,
         createdAt,
@@ -146,7 +188,7 @@ export default function SalesPanel() {
       await db.expenses.add({
         id: crypto.randomUUID(),
         amount: total,
-        currency: "CUP",
+        currency: saleCurrency,
         description: qty > 1 ? `${desc} (x${qty})` : desc,
         type: "income",
         date: now,
@@ -172,7 +214,10 @@ export default function SalesPanel() {
       }
 
       await recalculateDailyTotal();
-      showToast(`Venta registrada: $${(total / 100).toFixed(2)}`, "success");
+      showToast(
+        `Venta registrada: ${formatAmount(total, saleCurrency)}`,
+        "success",
+      );
 
       // Reset form
       setSelectedProduct(null);
@@ -225,7 +270,7 @@ export default function SalesPanel() {
         className="bg-white dark:bg-teal-950 p-5 md:p-6 rounded-2xl border border-gray-200/60 dark:border-white/8 shadow-sm flex flex-col gap-4"
       >
         <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5 text-emerald-500" />
+          <ShoppingCart className="w-5 h-5 text-primary-500" />
           Nueva Venta
         </h3>
 
@@ -271,7 +316,7 @@ export default function SalesPanel() {
             onClick={() => setShowProductPicker(!showProductPicker)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${
               selectedProduct
-                ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+                ? "bg-primary-50 dark:bg-primary-900/20 border-primary-500/30 text-primary-700 dark:text-primary-300"
                 : "bg-gray-50 dark:bg-teal-900/40 border-gray-200/60 dark:border-white/8 text-gray-500 dark:text-gray-400"
             }`}
           >
@@ -282,7 +327,7 @@ export default function SalesPanel() {
                 : "Seleccionar producto o servicio..."}
             </span>
             {selectedProduct && (
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="text-xs font-bold text-primary-600 dark:text-primary-400">
                 ${(selectedProduct.price / 100).toFixed(2)}
               </span>
             )}
@@ -334,7 +379,7 @@ export default function SalesPanel() {
                       onClick={() => selectProduct(product)}
                       className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                         selectedProduct?.id === product.id
-                          ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 font-semibold"
+                          ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-semibold"
                           : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
                       }`}
                     >
@@ -346,7 +391,7 @@ export default function SalesPanel() {
                       <span className="flex-1 text-left truncate">
                         {product.name}
                       </span>
-                      <span className="text-xs font-bold text-emerald-500">
+                      <span className="text-xs font-bold text-primary-500">
                         ${(product.price / 100).toFixed(2)}
                       </span>
                       {product.unit === "producto" && (
@@ -383,7 +428,7 @@ export default function SalesPanel() {
                 onChange={(e) => setCustomPrice(e.target.value)}
                 placeholder="Precio"
                 required
-                className="w-full bg-gray-50 dark:bg-teal-900/40 text-gray-900 dark:text-white px-4 py-3 pl-8 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 border border-gray-200/60 dark:border-white/8"
+                className="w-full bg-gray-50 dark:bg-teal-900/40 text-gray-900 dark:text-white px-4 py-3 pl-8 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-gray-200/60 dark:border-white/8"
               />
             </div>
             <div className="relative w-20 shrink-0">
@@ -396,7 +441,7 @@ export default function SalesPanel() {
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="1"
-                className="w-full bg-gray-50 dark:bg-teal-900/40 text-gray-900 dark:text-white px-2 py-3 pl-6 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 border border-gray-200/60 dark:border-white/8 text-center font-bold"
+                className="w-full bg-gray-50 dark:bg-teal-900/40 text-gray-900 dark:text-white px-2 py-3 pl-6 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-gray-200/60 dark:border-white/8 text-center font-bold"
               />
             </div>
           </div>
@@ -406,7 +451,7 @@ export default function SalesPanel() {
             onChange={(e) => setCustomDesc(e.target.value)}
             placeholder="Descripción de la venta..."
             required
-            className="w-full bg-gray-50 dark:bg-teal-900/40 text-gray-900 dark:text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 border border-gray-200/60 dark:border-white/8"
+            className="w-full bg-gray-50 dark:bg-teal-900/40 text-gray-900 dark:text-white px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-gray-200/60 dark:border-white/8"
           />
         </div>
 
@@ -423,7 +468,7 @@ export default function SalesPanel() {
                   onClick={() => setPaymentMethod(pm)}
                   className={`flex items-center gap-1 px-3 py-2 text-[11px] font-bold transition-all ${
                     paymentMethod === pm
-                      ? "bg-emerald-500 text-white"
+                      ? "bg-primary-500 text-white"
                       : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
                   }`}
                   title={paymentConfig[pm].label}
@@ -437,92 +482,217 @@ export default function SalesPanel() {
             })}
           </div>
 
-          {/* Total preview */}
+          {/* Currency pills */}
+          <div className="flex items-center bg-gray-50 dark:bg-teal-900/40 rounded-xl border border-gray-200/60 dark:border-white/8 overflow-hidden">
+            {CURRENCY_LIST.map((cur) => (
+              <button
+                key={cur}
+                type="button"
+                onClick={() => setSaleCurrency(cur)}
+                className={`flex items-center gap-1 px-3 py-2 text-[11px] font-bold transition-all ${
+                  saleCurrency === cur
+                    ? "bg-primary-500 text-white"
+                    : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
+                }`}
+              >
+                <span>{CURRENCIES[cur].flag}</span>
+                <span className="hidden sm:inline">{cur}</span>
+              </button>
+            ))}
+          </div>
+
           {parseFloat(customPrice || "0") > 0 && (
-            <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-xl">
-              Total: $
-              {(
-                (Math.round(parseFloat(customPrice || "0") * 100) *
-                  (parseInt(quantity || "1") || 1)) /
-                100
-              ).toFixed(2)}
+            <div className="flex items-center gap-1.5 text-sm font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 px-4 py-2 rounded-xl">
+              Total:{" "}
+              {formatAmount(
+                Math.round(parseFloat(customPrice || "0") * 100) *
+                  (parseInt(quantity || "1") || 1),
+                saleCurrency,
+              )}
             </div>
           )}
 
           <button
             type="submit"
-            className="ml-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20"
+            className="ml-auto px-6 py-3 bg-primary-500 hover:bg-primary-600 active:scale-95 text-white font-bold rounded-xl transition-all shadow-md shadow-primary-500/20"
           >
             Vender
           </button>
         </div>
       </form>
 
-      {/* ── Today's Sales History ── */}
+      {/* ── Today's Sales / History ── */}
       <div className="bg-white dark:bg-teal-950 p-5 md:p-6 rounded-2xl border border-gray-200/60 dark:border-white/8 shadow-sm">
+        {/* Tab switcher */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            Ventas de Hoy
-          </h3>
-          <div className="flex items-center gap-2 text-sm font-bold text-emerald-500">
-            <ShoppingCart className="w-4 h-4" />${(todayTotal / 100).toFixed(2)}
+          <div className="flex items-center bg-gray-100 dark:bg-teal-900/60 rounded-xl p-1">
+            <button
+              onClick={() => setHistoryTab("today")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                historyTab === "today"
+                  ? "bg-white dark:bg-teal-800 shadow-sm text-gray-900 dark:text-white"
+                  : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
+              }`}
+            >
+              <ShoppingCart className="w-3.5 h-3.5" />
+              Hoy
+            </button>
+            <button
+              onClick={() => setHistoryTab("history")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                historyTab === "history"
+                  ? "bg-white dark:bg-teal-800 shadow-sm text-gray-900 dark:text-white"
+                  : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              Historial
+            </button>
           </div>
+          {historyTab === "today" && (
+            <div className="flex items-center gap-2 text-sm font-bold text-primary-500">
+              <ShoppingCart className="w-4 h-4" />
+              {formatAmount(todayTotal, todaySales[0]?.currency || "CUP")}
+            </div>
+          )}
         </div>
 
-        {todaySales.length === 0 ? (
-          <div className="text-center py-8">
-            <ShoppingCart className="w-10 h-10 text-gray-200 dark:text-gray-700 mx-auto mb-2" />
-            <p className="text-sm text-gray-400 dark:text-gray-500">
-              No hay ventas registradas hoy.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {todaySales.map((sale) => {
-              const time = new Date(sale.date).toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
-              const itemName = sale.items[0]?.name || "Venta";
-              const itemQty = sale.items[0]?.quantity || 1;
-              const pm = paymentConfig[sale.paymentMethod];
-              const PMIcon = pm?.icon || Banknote;
+        {/* TODAY TAB */}
+        {historyTab === "today" && (
+          <>
+            {todaySales.length === 0 ? (
+              <div className="text-center py-8">
+                <ShoppingCart className="w-10 h-10 text-gray-200 dark:text-gray-700 mx-auto mb-2" />
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  No hay ventas registradas hoy.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {todaySales.map((sale) => {
+                  const time = new Date(sale.date).toLocaleTimeString("es-ES", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  });
+                  const itemName = sale.items[0]?.name || "Venta";
+                  const itemQty = sale.items[0]?.quantity || 1;
+                  const pm = paymentConfig[sale.paymentMethod];
+                  const PMIcon = pm?.icon || Banknote;
 
-              return (
-                <div
-                  key={sale.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 group"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                    <ShoppingCart className="w-4 h-4 text-emerald-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                      {itemQty > 1 ? `${itemName} (x${itemQty})` : itemName}
-                    </p>
-                    <div className="flex items-center gap-2 text-[11px] text-gray-400">
-                      <span>{time}</span>
-                      <span>·</span>
-                      <span className="flex items-center gap-1">
-                        <PMIcon className="w-3 h-3" />
-                        {pm?.label || sale.paymentMethod}
+                  return (
+                    <div
+                      key={sale.id}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 group"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-primary-500/10 flex items-center justify-center shrink-0">
+                        <ShoppingCart className="w-4 h-4 text-primary-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                          {itemQty > 1 ? `${itemName} (x${itemQty})` : itemName}
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-gray-400">
+                          <span>{time}</span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1">
+                            <PMIcon className="w-3 h-3" />
+                            {pm?.label || sale.paymentMethod}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-sm font-bold text-primary-500 shrink-0">
+                        +{formatAmount(sale.total, sale.currency || "CUP")}
                       </span>
+                      <button
+                        onClick={() => deleteSale(sale)}
+                        className="p-1.5 rounded-lg text-gray-300 dark:text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                        title="Eliminar venta"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* HISTORY TAB */}
+        {historyTab === "history" && (
+          <>
+            {pastSales.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="w-10 h-10 text-gray-200 dark:text-gray-700 mx-auto mb-2" />
+                <p className="text-sm text-gray-400 dark:text-gray-500">
+                  No hay ventas anteriores.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-5">
+                {Object.entries(groupedHistory).map(([dateLabel, sales]) => (
+                  <div key={dateLabel} className="flex flex-col gap-2">
+                    <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-100 dark:bg-teal-950/50 py-1.5 px-3 rounded-lg w-fit">
+                      {dateLabel}
+                    </h4>
+                    {sales.map((sale) => {
+                      const time = new Date(sale.date).toLocaleTimeString(
+                        "es-ES",
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      );
+                      const itemName = sale.items[0]?.name || "Venta";
+                      const itemQty = sale.items[0]?.quantity || 1;
+                      const pm = paymentConfig[sale.paymentMethod];
+                      const PMIcon = pm?.icon || Banknote;
+
+                      return (
+                        <div
+                          key={sale.id}
+                          className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5 group"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-primary-500/10 flex items-center justify-center shrink-0">
+                            <ShoppingCart className="w-4 h-4 text-primary-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                              {itemQty > 1
+                                ? `${itemName} (x${itemQty})`
+                                : itemName}
+                            </p>
+                            <div className="flex items-center gap-2 text-[11px] text-gray-400">
+                              <span>{time}</span>
+                              <span>·</span>
+                              <span className="flex items-center gap-1">
+                                <PMIcon className="w-3 h-3" />
+                                {pm?.label || sale.paymentMethod}
+                              </span>
+                              <span>·</span>
+                              <span className="font-semibold">
+                                {sale.currency || "CUP"}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-sm font-bold text-primary-500 shrink-0">
+                            +{formatAmount(sale.total, sale.currency || "CUP")}
+                          </span>
+                          <button
+                            onClick={() => deleteSale(sale)}
+                            className="p-1.5 rounded-lg text-gray-300 dark:text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Eliminar venta"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <span className="text-sm font-bold text-emerald-500 shrink-0">
-                    +${(sale.total / 100).toFixed(2)}
-                  </span>
-                  <button
-                    onClick={() => deleteSale(sale)}
-                    className="p-1.5 rounded-lg text-gray-300 dark:text-gray-600 hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Eliminar venta"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

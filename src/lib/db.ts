@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
+import type { Currency } from "./currency";
 
 export interface Task {
   id: string;
@@ -15,7 +16,7 @@ export interface Task {
 export interface Expense {
   id: string;
   amount: number;
-  currency: "USD" | "EUR" | "CUP";
+  currency: Currency;
   description: string;
   type: "expense" | "income";
   tags: string[];
@@ -33,6 +34,7 @@ export interface Product {
   name: string;
   price: number; // sell price in cents
   cost: number; // cost/buy price in cents
+  currency: Currency;
   stock: number; // current stock (0 for services)
   unit: "producto" | "servicio" | "hora";
   categoryId?: string;
@@ -44,6 +46,7 @@ export interface Sale {
   id: string;
   items: SaleItem[];
   total: number; // total in cents
+  currency: Currency;
   paymentMethod: "efectivo" | "transferencia" | "tarjeta";
   customerName?: string;
   date: string;
@@ -66,12 +69,23 @@ export interface Project {
   createdAt: number;
 }
 
+export interface WalletTransaction {
+  id: string;
+  type: "deposit" | "withdrawal";
+  amount: number; // in cents
+  currency: Currency;
+  description: string;
+  date: string;
+  createdAt: number;
+}
+
 export class LaLibretaDB extends Dexie {
   tasks!: EntityTable<Task, "id">;
   expenses!: EntityTable<Expense, "id">;
   projects!: EntityTable<Project, "id">;
   products!: EntityTable<Product, "id">;
   sales!: EntityTable<Sale, "id">;
+  walletTransactions!: EntityTable<WalletTransaction, "id">;
 
   constructor() {
     super("LaLibretaDB");
@@ -186,6 +200,39 @@ export class LaLibretaDB extends Dexie {
             }
             if (task.isBusiness === undefined) {
               task.isBusiness = false;
+            }
+          });
+      });
+
+    // Version 5: Multi-currency + wallet
+    this.version(5)
+      .stores({
+        tasks:
+          "id, title, completed, priority, isBusiness, projectId, dueDate, categoryId, createdAt",
+        expenses:
+          "id, type, date, amount, currency, categoryId, projectId, isBusiness, isReimbursable, status, createdAt",
+        projects: "id, name, createdAt",
+        products:
+          "id, name, price, cost, currency, stock, unit, isActive, createdAt",
+        sales: "id, date, total, currency, paymentMethod, createdAt",
+        walletTransactions: "id, type, amount, currency, date, createdAt",
+      })
+      .upgrade((tx) => {
+        // Add currency to existing products
+        tx.table("products")
+          .toCollection()
+          .modify((product) => {
+            if (!product.currency) {
+              product.currency = "CUP";
+            }
+          });
+
+        // Add currency to existing sales
+        tx.table("sales")
+          .toCollection()
+          .modify((sale) => {
+            if (!sale.currency) {
+              sale.currency = "CUP";
             }
           });
       });

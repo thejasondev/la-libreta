@@ -15,6 +15,8 @@ import {
   Trash2,
   ShieldAlert,
   FileSpreadsheet,
+  Briefcase,
+  User,
 } from "lucide-react";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import { CATEGORIES } from "../../lib/categories";
@@ -194,11 +196,35 @@ export default function SettingsView() {
     }
 
     try {
-      await db.expenses.clear();
-      await db.tasks.clear();
-      await db.projects.clear();
+      if (isBizMode) {
+        // Business mode: delete only business data
+        const bizExpenses = await db.expenses
+          .filter((e) => e.isBusiness)
+          .toArray();
+        await Promise.all(bizExpenses.map((e) => db.expenses.delete(e.id)));
+        const bizTasks = await db.tasks.filter((t) => t.isBusiness).toArray();
+        await Promise.all(bizTasks.map((t) => db.tasks.delete(t.id)));
+        await db.products.clear();
+        await db.sales.clear();
+      } else {
+        // Personal mode: delete only personal data
+        const personalExpenses = await db.expenses
+          .filter((e) => !e.isBusiness)
+          .toArray();
+        await Promise.all(
+          personalExpenses.map((e) => db.expenses.delete(e.id)),
+        );
+        const personalTasks = await db.tasks
+          .filter((t) => !t.isBusiness)
+          .toArray();
+        await Promise.all(personalTasks.map((t) => db.tasks.delete(t.id)));
+        await db.walletTransactions.clear();
+      }
       await recalculateDailyTotal();
-      showToast("Base de datos reiniciada con éxito", "success");
+      showToast(
+        `Datos ${isBizMode ? "del negocio" : "personales"} eliminados`,
+        "success",
+      );
       setShowNukeStep2(false);
       setNukeInput("");
       setTimeout(() => window.location.reload(), 1500);
@@ -227,8 +253,14 @@ export default function SettingsView() {
 
       <ConfirmDialog
         isOpen={showNukeConfirm}
-        title="Restablecer aplicación"
-        message="¿ESTÁS SEGURO? Esto eliminará todos tus gastos, tareas y proyectos de tu dispositivo."
+        title={
+          isBizMode ? "Eliminar datos del negocio" : "Eliminar datos personales"
+        }
+        message={
+          isBizMode
+            ? "¿ESTÁS SEGURO? Esto eliminará todos tus productos, ventas, costos y tareas de negocio de este dispositivo. Tus datos personales NO se verán afectados."
+            : "¿ESTÁS SEGURO? Esto eliminará todos tus gastos, ingresos, ahorros y tareas personales de este dispositivo. Los datos de tu negocio NO se verán afectados."
+        }
         confirmLabel="Continuar"
         variant="danger"
         onConfirm={confirmNukeStep1}
@@ -290,6 +322,29 @@ export default function SettingsView() {
       )}
 
       <h2 className="text-2xl font-bold dark:text-white mb-2">Ajustes</h2>
+
+      {/* Mobile Mode Badge */}
+      <div className="sm:hidden flex items-center gap-2.5 bg-white dark:bg-teal-950 px-4 py-3 rounded-2xl border border-gray-200/60 dark:border-white/8 shadow-sm">
+        <div
+          className={`p-2 rounded-xl ${isBizMode ? "bg-primary-500/10 text-primary-500" : "bg-blue-500/10 text-blue-500"}`}
+        >
+          {isBizMode ? (
+            <Briefcase className="w-5 h-5" />
+          ) : (
+            <User className="w-5 h-5" />
+          )}
+        </div>
+        <div>
+          <p className="font-bold text-sm text-gray-900 dark:text-white">
+            {isBizMode ? "Modo Negocio" : "Modo Personal"}
+          </p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400">
+            {isBizMode
+              ? "Cambios afectan solo datos de negocio"
+              : "Cambios afectan solo datos personales"}
+          </p>
+        </div>
+      </div>
 
       {/* Appearance Section */}
       <section className="glass rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10">
@@ -409,10 +464,14 @@ export default function SettingsView() {
             </div>
             <div>
               <p className="font-medium text-red-600 dark:text-red-400">
-                Restablecer Aplicación
+                {isBizMode
+                  ? "Eliminar datos del negocio"
+                  : "Eliminar datos personales"}
               </p>
               <p className="text-xs text-red-500/70">
-                Borrar todos los datos de este dispositivo
+                {isBizMode
+                  ? "Borra productos, ventas y costos del negocio"
+                  : "Borra gastos, ahorros y tareas personales"}
               </p>
             </div>
           </div>
@@ -421,7 +480,7 @@ export default function SettingsView() {
             className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-bold transition-colors w-full sm:w-auto text-center flex items-center justify-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
-            Eliminar Datos
+            Eliminar
           </button>
         </div>
       </section>
