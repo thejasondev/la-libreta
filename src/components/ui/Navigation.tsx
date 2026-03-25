@@ -8,6 +8,8 @@ import {
   Package,
   Settings,
   Wallet,
+  Store,
+  User,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 

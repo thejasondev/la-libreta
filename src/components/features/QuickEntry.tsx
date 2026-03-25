@@ -18,8 +18,7 @@ import {
   getCategoryConfig,
   detectCategory,
 } from "../../lib/categories";
-
-type Currency = "CUP" | "USD" | "EUR";
+import { type Currency, CURRENCIES, formatAmount } from "../../lib/currency";
 type Priority = "high" | "medium" | "low";
 type ActiveTab = "expense" | "income" | "task";
 
@@ -179,6 +178,7 @@ export default function QuickEntry() {
               },
             ],
             total: totalAmountCents,
+            currency,
             paymentMethod: "efectivo",
             date: new Date().toISOString(),
             createdAt: Date.now(),
@@ -225,8 +225,8 @@ export default function QuickEntry() {
     }
   };
 
-  const currencySymbols = {
-    CUP: "cu",
+  const currencySymbols: Record<Currency, string> = {
+    CUP: "$",
     USD: "$",
     EUR: "€",
   };
@@ -433,7 +433,7 @@ export default function QuickEntry() {
                     key={c}
                     type="button"
                     onClick={() => setCurrency(c)}
-                    className={`px-3 py-2.5 text-[11px] font-extrabold tracking-wide transition-all ${
+                    className={`flex items-center gap-1 px-3 py-2.5 text-[11px] font-extrabold tracking-wide transition-all ${
                       currency === c
                         ? activeTab === "income"
                           ? "bg-emerald-500 text-white"
@@ -442,7 +442,8 @@ export default function QuickEntry() {
                     }`}
                     title={c}
                   >
-                    {c}
+                    <span>{CURRENCIES[c].flag}</span>
+                    <span className="hidden sm:inline">{c}</span>
                   </button>
                 ))}
               </div>

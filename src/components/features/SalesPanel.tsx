@@ -466,7 +466,7 @@ export default function SalesPanel() {
                   key={pm}
                   type="button"
                   onClick={() => setPaymentMethod(pm)}
-                  className={`flex items-center gap-1 px-3 py-2 text-[11px] font-bold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold transition-all ${
                     paymentMethod === pm
                       ? "bg-primary-500 text-white"
                       : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200"
@@ -474,9 +474,7 @@ export default function SalesPanel() {
                   title={paymentConfig[pm].label}
                 >
                   <PMIcon className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">
-                    {paymentConfig[pm].label}
-                  </span>
+                  {paymentConfig[pm].label}
                 </button>
               );
             })}

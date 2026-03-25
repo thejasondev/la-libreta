@@ -8,6 +8,7 @@ export default function Header() {
 
   const toggleMode = () => {
     $isBusinessMode.set(!isBizMode);
+    window.location.href = "/";
   };
 
   // Greeting based on time of day
@@ -37,7 +38,7 @@ export default function Header() {
               </span>
             </h1>
             <p className="text-gray-500 dark:text-gray-400 mb-4 mt-0.5 text-xs md:text-sm font-medium">
-              Tu resumen financiero al día
+              Tu resumen financiero personal al día
             </p>
           </>
         )}

@@ -17,8 +17,7 @@ import {
   getCategoryConfig,
   detectCategory,
 } from "../../lib/categories";
-
-type Currency = "CUP" | "USD" | "EUR";
+import { type Currency, CURRENCIES } from "../../lib/currency";
 type EntryType = "expense" | "income";
 
 export default function ExpenseInput() {
@@ -347,7 +346,7 @@ export default function ExpenseInput() {
                   key={c}
                   type="button"
                   onClick={() => setCurrency(c)}
-                  className={`px-3 py-2.5 text-[11px] font-extrabold tracking-wide transition-all ${
+                  className={`flex items-center gap-1 px-3 py-2.5 text-[11px] font-extrabold tracking-wide transition-all ${
                     currency === c
                       ? isIncome
                         ? "bg-emerald-500 text-white"
@@ -356,7 +355,8 @@ export default function ExpenseInput() {
                   }`}
                   title={c}
                 >
-                  {c}
+                  <span>{CURRENCIES[c].flag}</span>
+                  <span className="hidden sm:inline">{c}</span>
                 </button>
               ))}
             </div>
