@@ -98,8 +98,8 @@ export default function InventoryManager() {
     const costCents = Math.round(parseFloat(cost || "0") * 100);
     const stockNum = unit === "producto" ? parseInt(stock || "0", 10) : 0;
 
-    if (priceCents <= 0) {
-      showToast("Ingresa un precio de venta válido", "warning");
+    if (costCents <= 0) {
+      showToast("Ingresa un precio de costo válido", "warning");
       return;
     }
 
@@ -355,22 +355,6 @@ export default function InventoryManager() {
 
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">
-                Venta $
-              </span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="0.00"
-                required
-                className="w-full bg-gray-50 dark:bg-teal-900/40 text-gray-900 dark:text-white px-4 py-3 pl-16 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 border border-gray-200/60 dark:border-white/8"
-              />
-            </div>
-
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">
                 Costo $
               </span>
               <input
@@ -379,8 +363,24 @@ export default function InventoryManager() {
                 step="0.01"
                 value={cost}
                 onChange={(e) => setCost(e.target.value)}
-                placeholder="0.00 (opcional)"
+                placeholder="0.00"
+                required
                 className="w-full bg-gray-50 dark:bg-teal-900/40 text-gray-900 dark:text-white px-4 py-3 pl-16 rounded-xl outline-none focus:ring-2 focus:ring-primary-500 border border-gray-200/60 dark:border-white/8"
+              />
+            </div>
+
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-bold">
+                Venta $
+              </span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="0.00 (opcional)"
+                className="w-full bg-gray-50 dark:bg-teal-900/40 text-gray-900 dark:text-white px-4 py-3 pl-16 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 border border-gray-200/60 dark:border-white/8"
               />
             </div>
 

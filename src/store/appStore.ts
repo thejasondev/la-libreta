@@ -11,7 +11,9 @@ export const $darkMode = atom<boolean>(true);
 
 // Initialize daily total from Dexie on mount
 onMount($dailyTotal, () => {
-  recalculateDailyTotal();
+  if (typeof window !== "undefined") {
+    recalculateDailyTotal();
+  }
 });
 
 // Persist & apply dark mode
@@ -107,6 +109,7 @@ onMount($personalBudget, () => {
 });
 
 export async function recalculateDailyTotal() {
+  if (typeof window === "undefined") return;
   $isSyncing.set(true);
   try {
     const today = new Date();
@@ -133,13 +136,12 @@ export async function recalculateDailyTotal() {
 
 // Keep the active project cached locally
 onMount($currentProject, () => {
-  if (typeof window !== "undefined") {
-    const cachedId = localStorage.getItem("laLibreta_activeProject");
-    if (cachedId) {
-      db.projects.get(cachedId).then((p) => {
-        if (p) $currentProject.set(p);
-      });
-    }
+  if (typeof window === "undefined") return;
+  const cachedId = localStorage.getItem("laLibreta_activeProject");
+  if (cachedId) {
+    db.projects.get(cachedId).then((p) => {
+      if (p) $currentProject.set(p);
+    });
   }
 
   const unsubscribe = $currentProject.listen((project) => {

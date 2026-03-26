@@ -145,17 +145,6 @@ export default function WalletView() {
         onCancel={() => setDeleteTarget(null)}
       />
 
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Wallet className="w-6 h-6 text-primary-500" />
-          Ahorros
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Gestiona y visualiza tus ahorros en múltiples monedas
-        </p>
-      </div>
-
       {/* Balance Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {CURRENCY_LIST.map((cur) => {

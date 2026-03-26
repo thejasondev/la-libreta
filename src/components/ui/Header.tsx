@@ -58,9 +58,7 @@ export default function Header() {
           ) : (
             <Store className="w-4 h-4" />
           )}
-          <span className="hidden sm:inline">
-            {isBizMode ? "Personal" : "Negocio"}
-          </span>
+          {isBizMode ? "Personal" : "Negocio"}
         </button>
       </div>
     </header>

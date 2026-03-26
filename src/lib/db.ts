@@ -239,4 +239,18 @@ export class LaLibretaDB extends Dexie {
   }
 }
 
-export const db = new LaLibretaDB();
+let _db: LaLibretaDB | null = null;
+
+function getDb(): LaLibretaDB {
+  if (!_db) {
+    _db = new LaLibretaDB();
+  }
+  return _db;
+}
+
+// Proxy that lazily initializes, safe for SSR (module evaluates without crashing)
+export const db = new Proxy({} as LaLibretaDB, {
+  get(_target, prop) {
+    return (getDb() as any)[prop];
+  },
+});

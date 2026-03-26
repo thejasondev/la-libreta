@@ -49,17 +49,6 @@ export default function Navigation() {
 
   useEffect(() => {
     setCurrentPath(window.location.pathname);
-
-    const handleSwap = () => setCurrentPath(window.location.pathname);
-    const handlePopState = () => setCurrentPath(window.location.pathname);
-
-    document.addEventListener("astro:after-swap", handleSwap);
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      document.removeEventListener("astro:after-swap", handleSwap);
-      window.removeEventListener("popstate", handlePopState);
-    };
   }, []);
 
   const visibleItems = allNavItems.filter((item) => {
@@ -94,7 +83,6 @@ export default function Navigation() {
               <a
                 key={item.path}
                 href={item.path}
-                data-astro-prefetch
                 className={`relative flex flex-col items-center justify-center px-4 py-1.5 rounded-xl transition-all duration-200 ${
                   active
                     ? "text-primary-600 dark:text-white"
@@ -151,7 +139,6 @@ export default function Navigation() {
               <a
                 key={item.path}
                 href={item.path}
-                data-astro-prefetch
                 className={`flex items-center gap-3 px-4 py-2.5 w-full rounded-xl transition-all ${
                   active
                     ? "text-primary-500 bg-primary-50 dark:bg-primary-900/20 font-semibold"

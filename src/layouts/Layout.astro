@@ -1,5 +1,4 @@
 ---
-import { ClientRouter } from 'astro:transitions';
 import Navigation from '../components/ui/Navigation';
 import ToastContainer from '../components/ui/ToastContainer';
 import '../styles/global.css';
@@ -50,7 +49,7 @@ const {
       - Runs on initial load AND is re-applied via astro:after-swap
     -->
     <script is:inline>
-      function applyTheme() {
+      (function() {
         var saved = localStorage.getItem('laLibreta_darkMode');
         var isDark = saved !== null ? saved === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches;
         
@@ -61,7 +60,6 @@ const {
         }
 
         var isBiz = localStorage.getItem('laLibreta_isBusinessMode');
-        // Also check old key for migration
         if (isBiz === null) {
           isBiz = localStorage.getItem('laLibreta_isProMode');
         }
@@ -70,21 +68,7 @@ const {
         } else {
           document.documentElement.classList.remove('theme-biz');
         }
-      }
-
-      // Run immediately on first load
-      applyTheme();
-
-      // Re-apply after every Astro View Transition page swap
-      document.addEventListener('astro:after-swap', applyTheme);
-
-      // Also preserve classes during the swap itself
-      document.addEventListener('astro:before-swap', function(e) {
-        var isDark = document.documentElement.classList.contains('dark');
-        var isBiz = document.documentElement.classList.contains('theme-biz');
-        if (isDark) e.newDocument.documentElement.classList.add('dark');
-        if (isBiz) e.newDocument.documentElement.classList.add('theme-biz');
-      });
+      })();
     </script>
 
     <!-- Service Worker Registration -->
@@ -98,12 +82,12 @@ const {
       }
     </script>
 
-    <ClientRouter />
+
 	</head>
 	<body>
-    <ToastContainer client:load transition:persist />
-    <Navigation client:load transition:persist />
-    <main transition:animate="fade" class="md:pl-64 min-h-screen p-4 md:p-8 md:ml-4">
+    <ToastContainer client:load />
+    <Navigation client:load />
+    <main class="md:pl-64 min-h-screen p-4 md:p-8 md:ml-4">
 		  <slot />
     </main>
 	</body>
