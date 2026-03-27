@@ -153,15 +153,20 @@ export default function Navigation() {
 
           {/* Mode indicator — pinned to bottom */}
           <div className="mt-auto mb-6 px-4 w-full">
-            <div
-              className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold text-center uppercase tracking-wider ${
+            <button
+              onClick={() => {
+                $isBusinessMode.set(!isBizMode);
+                window.location.href = "/";
+              }}
+              className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm ${
                 isBizMode
-                  ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20"
-                  : "bg-primary-500/10 text-primary-500 border border-primary-500/20"
+                  ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 hover:bg-teal-500/20"
+                  : "bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 hover:bg-primary-500/20"
               }`}
             >
-              {isBizMode ? "Modo Negocio" : "Modo Personal"}
-            </div>
+              {isBizMode ? <User className="w-4 h-4" /> : <Store className="w-4 h-4" />}
+              {isBizMode ? "Cambiar a Personal" : "Cambiar a Negocio"}
+            </button>
           </div>
         </div>
       </nav>

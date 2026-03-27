@@ -24,5 +24,9 @@
     "recharts": "^3.8.0",
     "tailwindcss": "^4.2.1",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@vite-pwa/astro": "^1.2.0",
+    "workbox-window": "^7.4.0"
   }
 }

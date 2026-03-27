@@ -1,6 +1,8 @@
 ---
 import Navigation from '../components/ui/Navigation';
 import ToastContainer from '../components/ui/ToastContainer';
+import { ClientRouter } from 'astro:transitions';
+import { pwaInfo } from 'virtual:pwa-info';
 import '../styles/global.css';
 
 interface Props {
@@ -32,11 +34,12 @@ const {
 		<meta name="apple-mobile-web-app-title" content="La Libreta" />
 
 		<!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.webmanifest" />
+    {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
     <meta name="theme-color" content="#088395" />
     <meta name="description" content={description} />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+    <ClientRouter />
     
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -71,19 +74,8 @@ const {
       })();
     </script>
 
-    <!-- Service Worker Registration -->
-    <script is:inline>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/sw.js').catch(function(err) {
-            console.log('SW registration failed:', err);
-          });
-        });
-      }
-    </script>
-
-
-	</head>
+    <!-- Service worker registration handled automatically by @vite-pwa/astro -->
+  </head>
 	<body>
     <ToastContainer client:load />
     <Navigation client:load />

@@ -187,7 +187,11 @@ export default function WalletView() {
             setTxType("deposit");
             setShowForm(true);
           }}
-          className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-xl transition-all active:scale-95 shadow-md shadow-primary-500/20"
+          className={`flex-1 flex items-center justify-center gap-2 py-3 font-bold rounded-xl transition-all active:scale-95 border ${
+            showForm && txType === "deposit"
+              ? "bg-primary-500 hover:bg-primary-600 text-white border-transparent shadow-md shadow-primary-500/20"
+              : "bg-white dark:bg-teal-900/40 hover:bg-gray-50 dark:hover:bg-teal-800/60 text-gray-700 dark:text-gray-200 border-gray-200/60 dark:border-white/8"
+          }`}
         >
           <ArrowDownCircle className="w-4 h-4" />
           Depositar
@@ -197,7 +201,11 @@ export default function WalletView() {
             setTxType("withdrawal");
             setShowForm(true);
           }}
-          className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-100 dark:bg-teal-900/40 hover:bg-gray-200 dark:hover:bg-teal-800/60 text-gray-900 dark:text-white font-bold rounded-xl transition-all active:scale-95 border border-gray-200/60 dark:border-white/8"
+          className={`flex-1 flex items-center justify-center gap-2 py-3 font-bold rounded-xl transition-all active:scale-95 border ${
+            showForm && txType === "withdrawal"
+              ? "bg-red-500 hover:bg-red-600 text-white border-transparent shadow-md shadow-red-500/20"
+              : "bg-white dark:bg-teal-900/40 hover:bg-gray-50 dark:hover:bg-teal-800/60 text-gray-700 dark:text-gray-200 border-gray-200/60 dark:border-white/8"
+          }`}
         >
           <ArrowUpCircle className="w-4 h-4" />
           Retirar

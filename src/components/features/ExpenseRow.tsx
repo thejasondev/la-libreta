@@ -8,6 +8,7 @@ interface ExpenseRowProps {
   onDelete: (id: string) => void;
   onEdit?: (expense: Expense) => void;
   formatDate: (ts: string | number) => string;
+  getProjectColor?: (id?: string) => string | null;
 }
 
 export default function ExpenseRow({
@@ -15,6 +16,7 @@ export default function ExpenseRow({
   onDelete,
   onEdit,
   formatDate,
+  getProjectColor,
 }: ExpenseRowProps) {
   const [offset, setOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -62,7 +64,7 @@ export default function ExpenseRow({
 
       {/* Foreground Row */}
       <div
-        className={`relative w-full glass p-4 flex justify-between items-center transition-transform cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/[0.02] ${!isSwiping ? "duration-300 ease-out" : "duration-0"}`}
+        className={`relative w-full glass p-4 flex justify-between items-center transition-transform cursor-pointer hover:bg-gray-50/50 dark:hover:bg-white/2 ${!isSwiping ? "duration-300 ease-out" : "duration-0"}`}
         style={{ transform: `translateX(${offset}px)` }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
