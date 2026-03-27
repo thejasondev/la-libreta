@@ -1,6 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { $isBusinessMode } from "../../store/appStore";
 import { Store, User } from "lucide-react";
+import { navigate } from "astro:transitions/client";
 
 /**
  * Compact mode toggle for page headers (mobile only, md:hidden).
@@ -10,8 +11,18 @@ export default function ModeToggle() {
   const isBizMode = useStore($isBusinessMode);
 
   const handleToggle = () => {
-    $isBusinessMode.set(!isBizMode);
-    window.location.href = "/";
+    const nextMode = !isBizMode;
+    $isBusinessMode.set(nextMode);
+
+    const path = window.location.pathname;
+    const isPersonalOnly = path.startsWith('/tareas') || path.startsWith('/gastos') || path.startsWith('/ahorros');
+    const isBizOnly = path.startsWith('/ventas') || path.startsWith('/inventario');
+
+    if (nextMode && isPersonalOnly) {
+      navigate("/");
+    } else if (!nextMode && isBizOnly) {
+      navigate("/");
+    }
   };
 
   return (

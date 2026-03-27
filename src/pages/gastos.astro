@@ -2,7 +2,6 @@
 import Layout from '../layouts/Layout.astro';
 import ExpenseView from '../components/features/ExpenseView';
 import ExpenseInput from '../components/features/ExpenseInput';
-import SalesPanel from '../components/features/SalesPanel';
 import ModeToggle from '../components/ui/ModeToggle';
 ---
 
@@ -11,14 +10,14 @@ import ModeToggle from '../components/ui/ModeToggle';
     <!-- Dynamic header (set by script below) -->
     <div class="mb-2 px-2 flex items-start justify-between gap-4">
       <div>
-        <h1 id="gastos-title" class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Gastos e Ingresos</h1>
-        <p id="gastos-subtitle" class="text-sm text-gray-500 dark:text-gray-400 mt-1">Registra tus movimientos financieros y controla tu presupuesto.</p>
+        <h1 class="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Gastos e Ingresos</h1>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Registra tus movimientos financieros y controla tu presupuesto.</p>
       </div>
       <ModeToggle client:load />
     </div>
 
     <!-- Personal mode: ExpenseInput + ExpenseView -->
-    <div id="personal-gastos">
+    <div>
       <section>
         <ExpenseInput client:load />
       </section>
@@ -26,30 +25,5 @@ import ModeToggle from '../components/ui/ModeToggle';
         <ExpenseView client:load />
       </div>
     </div>
-
-    <!-- Business mode: SalesPanel POS -->
-    <div id="business-ventas" style="display:none">
-      <SalesPanel client:load />
-    </div>
   </div>
 </Layout>
-
-<script>
-  function updateGastosPage() {
-    const isBiz = localStorage.getItem('laLibreta_isBusinessMode') === 'true';
-    const title = document.getElementById('gastos-title');
-    const subtitle = document.getElementById('gastos-subtitle');
-    const personalSection = document.getElementById('personal-gastos');
-    const businessSection = document.getElementById('business-ventas');
-
-    if (title) title.textContent = isBiz ? 'Ventas' : 'Gastos e Ingresos';
-    if (subtitle) subtitle.textContent = isBiz
-      ? 'Registra las ventas de tu negocio. Selecciona productos o servicios del catálogo.'
-      : 'Registra tus movimientos financieros y controla tu presupuesto.';
-    if (personalSection) personalSection.style.display = isBiz ? 'none' : '';
-    if (businessSection) businessSection.style.display = isBiz ? '' : 'none';
-  }
-  updateGastosPage();
-  document.addEventListener('astro:after-swap', updateGastosPage);
-  window.addEventListener('businessModeChanged', updateGastosPage);
-</script>

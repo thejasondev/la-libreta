@@ -74,7 +74,14 @@ const {
       })();
     </script>
 
-    <!-- Service worker registration handled automatically by @vite-pwa/astro -->
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        });
+      }
+    </script>
   </head>
 	<body>
     <ToastContainer client:load />

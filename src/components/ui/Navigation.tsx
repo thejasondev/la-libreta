@@ -12,6 +12,7 @@ import {
   User,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { navigate } from "astro:transitions/client";
 
 type NavItem = {
   path: string;
@@ -25,14 +26,8 @@ type NavItem = {
 const allNavItems: NavItem[] = [
   { path: "/", label: "Inicio", icon: Home, showIn: "all" },
   { path: "/tareas", label: "Tareas", icon: CheckSquare, showIn: "personal" },
-  {
-    path: "/gastos",
-    label: "Gastos",
-    icon: DollarSign,
-    bizLabel: "Ventas",
-    bizIcon: ShoppingCart,
-    showIn: "all",
-  },
+  { path: "/gastos", label: "Gastos", icon: DollarSign, showIn: "personal" },
+  { path: "/ventas", label: "Ventas", icon: ShoppingCart, showIn: "business" },
   { path: "/ahorros", label: "Ahorros", icon: Wallet, showIn: "personal" },
   {
     path: "/inventario",
@@ -155,8 +150,18 @@ export default function Navigation() {
           <div className="mt-auto mb-6 px-4 w-full">
             <button
               onClick={() => {
-                $isBusinessMode.set(!isBizMode);
-                window.location.href = "/";
+                const nextMode = !isBizMode;
+                $isBusinessMode.set(nextMode);
+
+                const path = window.location.pathname;
+                const isPersonalOnly = path.startsWith('/tareas') || path.startsWith('/gastos') || path.startsWith('/ahorros');
+                const isBizOnly = path.startsWith('/ventas') || path.startsWith('/inventario');
+
+                if (nextMode && isPersonalOnly) {
+                  navigate("/");
+                } else if (!nextMode && isBizOnly) {
+                  navigate("/");
+                }
               }}
               className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-95 cursor-pointer shadow-sm ${
                 isBizMode

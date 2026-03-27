@@ -153,7 +153,7 @@ export default function WalletView() {
           return (
             <div
               key={cur}
-              className={`relative overflow-hidden bg-gradient-to-br ${cardStyles[cur]} p-5 rounded-2xl text-white shadow-lg`}
+              className={`relative overflow-hidden bg-linear-to-br ${cardStyles[cur]} p-5 rounded-2xl text-white shadow-lg`}
             >
               <div className="absolute -top-6 -right-6 w-20 h-20 bg-white/10 rounded-full blur-xl" />
               <div className="relative z-10">
