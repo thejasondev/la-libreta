@@ -3,6 +3,7 @@ import Navigation from '../components/ui/Navigation';
 import ToastContainer from '../components/ui/ToastContainer';
 import { ClientRouter } from 'astro:transitions';
 import { pwaInfo } from 'virtual:pwa-info';
+import Analytics from '@vercel/analytics/astro';
 import '../styles/global.css';
 
 interface Props {
@@ -89,6 +90,7 @@ const {
     <main class="md:pl-64 min-h-screen p-4 md:p-8 md:ml-4">
 		  <slot />
     </main>
+    <Analytics />
 	</body>
 </html>
 
