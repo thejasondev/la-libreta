@@ -43,7 +43,14 @@ export default function Navigation() {
   const [currentPath, setCurrentPath] = useState("/");
 
   useEffect(() => {
-    setCurrentPath(window.location.pathname);
+    const updatePath = () => setCurrentPath(window.location.pathname);
+    
+    // Set initially
+    updatePath();
+
+    // Listen to Astro's client-side router (View Transitions) since this component is persistent
+    document.addEventListener("astro:page-load", updatePath);
+    return () => document.removeEventListener("astro:page-load", updatePath);
   }, []);
 
   const visibleItems = allNavItems.filter((item) => {
@@ -156,13 +163,16 @@ export default function Navigation() {
         >
           {/* FLUID FLOATING PILL */}
           <div
-            className={`absolute top-2 bottom-2 rounded-[18px] bg-primary-500/10 dark:bg-primary-500/25 pointer-events-none transition-all ${
-              isDragging ? 'duration-100 ease-out scale-90 opacity-60' : 'duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] scale-100 opacity-100'
+            className={`absolute top-2 bottom-2 rounded-[18px] bg-primary-500/10 dark:bg-primary-500/25 pointer-events-none ${
+              isDragging ? 'scale-90 opacity-60' : 'scale-100 opacity-100'
             }`}
             style={{
               left: isDragging ? `${dragX}px` : `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,
-              opacity: indicatorStyle.opacity === 0 ? 0 : undefined
+              opacity: indicatorStyle.opacity === 0 ? 0 : undefined,
+              transition: isDragging 
+                ? 'transform 150ms ease, opacity 150ms ease, left 0s' 
+                : 'all 300ms cubic-bezier(0.23, 1, 0.32, 1)'
             }}
           />
 
