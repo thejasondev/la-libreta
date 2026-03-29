@@ -50,9 +50,9 @@ const {
     <!-- 
       Theme initialization script.
       - is:inline = runs synchronously before paint (no bundling)
-      - data-astro-rerun = Ensures execution after ClientRouter page swaps
+      - astro:before-swap = copies theme class state seamlessly to the new incoming page before paint
     -->
-    <script is:inline data-astro-rerun>
+    <script is:inline>
       (function() {
         var saved = localStorage.getItem('laLibreta_darkMode');
         var isDark = saved !== null ? saved === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -73,6 +73,13 @@ const {
           document.documentElement.classList.remove('theme-biz');
         }
       })();
+
+      // Prevent Astro View Transitions from flashing white unexpectedly
+      document.addEventListener('astro:before-swap', (ev) => {
+        // Copia las clases actuales (dark, theme-biz) exactamente al nuevo DOM oculto que Astro acaba de recibir.
+        // Al hacer el swap en pantalla, ya viene pre-pintado con el tema actual.
+        ev.newDocument.documentElement.className = document.documentElement.className;
+      });
     </script>
 
     <!-- Service Worker Registration & PWA Auto-Update Hook -->
