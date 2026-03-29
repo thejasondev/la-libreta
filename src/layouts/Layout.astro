@@ -12,7 +12,7 @@ interface Props {
 }
 
 const { 
-  title = 'La Libreta - Gestor Personal de Tareas y Finanzas',
+  title = 'La Libreta - Gestor de Tareas y Finanzas',
   description = 'Una PWA rápida, Local-first de alto rendimiento para gestión financiera y tareas.'
 } = Astro.props;
 ---
@@ -75,11 +75,34 @@ const {
       })();
     </script>
 
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration & PWA Auto-Update Hook -->
     <script>
+      import { registerSW } from 'virtual:pwa-register';
+
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        const updateSW = registerSW({
+          immediate: true,
+          onRegisteredSW(swUrl: string, r?: ServiceWorkerRegistration) {
+            if (!r) return;
+            
+            // Check for updates every 1 hour
+            setInterval(() => r.update(), 60 * 60 * 1000);
+
+            // iOS PWA fix: Check for updates when app regains focus
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') {
+                r.update();
+              }
+            });
+          },
+          onNeedRefresh() {
+            if (window.confirm('Hay una nueva versión de La Libreta con mejoras y optimizaciones.\n\n¿Deseas actualizar ahora?')) {
+              updateSW(true);
+            }
+          },
+          onOfflineReady() {
+            console.log('PWA lista para funcionar 100% offline.');
+          }
         });
       }
     </script>

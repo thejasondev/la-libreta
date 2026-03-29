@@ -25,7 +25,7 @@ export default defineConfig({
   integrations: [
     react(),
     AstroPWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       injectRegister: "script",
       manifest: {
         name: "La Libreta",
