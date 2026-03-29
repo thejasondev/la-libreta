@@ -11,7 +11,7 @@ import {
   Store,
   User,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { navigate } from "astro:transitions/client";
 
 type NavItem = {
@@ -58,18 +58,115 @@ export default function Navigation() {
     return currentPath.startsWith(path);
   };
 
+  // --- FLUID LIQUID GLASS INTERACTION ---
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragX, setDragX] = useState(0);
+
+  useLayoutEffect(() => {
+    // Determine which tab is actively selected based on the route
+    const activeIndex = visibleItems.findIndex(item => isActive(item.path));
+    if (activeIndex !== -1 && tabRefs.current[activeIndex] && navContainerRef.current) {
+      const activeElement = tabRefs.current[activeIndex];
+      const containerRect = navContainerRef.current.getBoundingClientRect();
+      const elRect = activeElement!.getBoundingClientRect();
+      
+      setIndicatorStyle({
+        left: elRect.left - containerRect.left,
+        width: elRect.width,
+        opacity: 1
+      });
+    } else {
+      setIndicatorStyle(prev => ({ ...prev, opacity: 0 }));
+    }
+  }, [currentPath, isBizMode, visibleItems.length]);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    if (navContainerRef.current) {
+      const rect = navContainerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      setDragX(x - indicatorStyle.width / 2);
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    if (navContainerRef.current) {
+      const rect = navContainerRef.current.getBoundingClientRect();
+      let x = e.clientX - rect.left - indicatorStyle.width / 2;
+      // Soft clamp
+      if (x < 0) x = 0;
+      if (x > rect.width - indicatorStyle.width) x = rect.width - indicatorStyle.width;
+      setDragX(x);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    
+    if (navContainerRef.current) {
+      const rect = navContainerRef.current.getBoundingClientRect();
+      const fingerX = e.clientX - rect.left;
+      
+      let closestIndex = -1;
+      let minDistance = Infinity;
+
+      tabRefs.current.forEach((el, idx) => {
+        if (el) {
+          const elRect = el.getBoundingClientRect();
+          const relativeCenter = (elRect.left - rect.left) + elRect.width / 2;
+          const dist = Math.abs(fingerX - relativeCenter);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestIndex = idx;
+          }
+        }
+      });
+
+      if (closestIndex !== -1) {
+        const item = visibleItems[closestIndex];
+        if (!isActive(item.path)) {
+          navigate(item.path);
+        }
+      }
+    }
+  };
+  // ----------------------------------------
+
   return (
     <>
-      {/* ─── MOBILE: iOS 16+ Floating Tab Bar ─── */}
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:hidden">
         <div
-          className="flex items-center gap-1 px-3 py-2 rounded-[24px]
+          ref={navContainerRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="relative flex items-center gap-1 px-3 py-2 rounded-[24px] touch-none select-none
             bg-white/60 dark:bg-[rgba(2,29,38,0.65)]
             backdrop-blur-2xl backdrop-saturate-[1.8]
             shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
             border border-white/50 dark:border-white/8"
         >
-          {visibleItems.map((item) => {
+          {/* FLUID FLOATING PILL */}
+          <div
+            className={`absolute top-2 bottom-2 rounded-[18px] bg-primary-500/10 dark:bg-primary-500/25 pointer-events-none transition-all ${
+              isDragging ? 'duration-100 ease-out scale-90 opacity-60' : 'duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] scale-100 opacity-100'
+            }`}
+            style={{
+              left: isDragging ? `${dragX}px` : `${indicatorStyle.left}px`,
+              width: `${indicatorStyle.width}px`,
+              opacity: indicatorStyle.opacity === 0 ? 0 : undefined
+            }}
+          />
+
+          {visibleItems.map((item, index) => {
             const Icon = isBizMode && item.bizIcon ? item.bizIcon : item.icon;
             const label =
               isBizMode && item.bizLabel ? item.bizLabel : item.label;
@@ -78,16 +175,17 @@ export default function Navigation() {
               <a
                 key={item.path}
                 href={item.path}
-                className={`relative flex flex-col items-center justify-center px-4 py-1.5 rounded-xl transition-all duration-200 ${
+                ref={(el) => (tabRefs.current[index] = el)}
+                onClick={(e) => {
+                  // If we are dragging, prevent default click navigation
+                  if (isDragging) e.preventDefault();
+                }}
+                className={`relative flex flex-col items-center justify-center px-4 py-1.5 rounded-xl transition-colors duration-200 ${
                   active
                     ? "text-primary-600 dark:text-white"
-                    : "text-gray-400 dark:text-gray-500 active:scale-90"
+                    : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                 }`}
               >
-                {/* Active pill background */}
-                {active && (
-                  <div className="absolute inset-0 bg-primary-500/10 dark:bg-primary-500/25 rounded-[18px]" />
-                )}
                 <Icon
                   className={`w-5 h-5 relative z-10 transition-all duration-300 ${active ? "text-primary-500 dark:text-primary-300 mb-0.5" : "text-gray-400 dark:text-gray-500"}`}
                   strokeWidth={active ? 2.5 : 1.8}
