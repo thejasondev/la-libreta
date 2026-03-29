@@ -63,11 +63,11 @@ export default function Navigation() {
       {/* ─── MOBILE: iOS 16+ Floating Tab Bar ─── */}
       <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 md:hidden">
         <div
-          className="flex items-center gap-1 px-3 py-2 rounded-2xl
-            bg-white/90 dark:bg-[rgba(4,45,58,0.88)]
-            backdrop-blur-xl
-            shadow-lg shadow-black/8 dark:shadow-black/40
-            border border-gray-200/80 dark:border-teal-700/15"
+          className="flex items-center gap-1 px-3 py-2 rounded-[24px]
+            bg-white/60 dark:bg-[rgba(2,29,38,0.65)]
+            backdrop-blur-2xl backdrop-saturate-[1.8]
+            shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
+            border border-white/50 dark:border-white/8"
         >
           {visibleItems.map((item) => {
             const Icon = isBizMode && item.bizIcon ? item.bizIcon : item.icon;
@@ -86,19 +86,19 @@ export default function Navigation() {
               >
                 {/* Active pill background */}
                 {active && (
-                  <div className="absolute inset-0 bg-primary-500/10 dark:bg-primary-500/25 rounded-xl" />
+                  <div className="absolute inset-0 bg-primary-500/10 dark:bg-primary-500/25 rounded-[18px]" />
                 )}
                 <Icon
-                  className={`w-5 h-5 relative z-10 ${active ? "text-primary-500 dark:text-primary-300" : ""}`}
+                  className={`w-5 h-5 relative z-10 transition-all duration-300 ${active ? "text-primary-500 dark:text-primary-300 mb-0.5" : "text-gray-400 dark:text-gray-500"}`}
                   strokeWidth={active ? 2.5 : 1.8}
                 />
-                <span
-                  className={`text-[9px] mt-0.5 font-medium relative z-10 ${
-                    active ? "text-primary-600 dark:text-primary-200" : ""
-                  }`}
-                >
-                  {label}
-                </span>
+                
+                {/* Only show label if active */}
+                {active && (
+                  <span className="text-[9px] font-bold relative z-10 text-primary-600 dark:text-primary-200 animate-in fade-in zoom-in duration-200">
+                    {label}
+                  </span>
+                )}
               </a>
             );
           })}
