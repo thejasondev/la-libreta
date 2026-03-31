@@ -71,6 +71,8 @@ export default function Navigation() {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragX, setDragX] = useState(0);
+  const [dragStartX, setDragStartX] = useState<number | null>(null);
+  const wasDraggingRef = useRef(false);
 
   useLayoutEffect(() => {
     // Determine which tab is actively selected based on the route
@@ -91,18 +93,26 @@ export default function Navigation() {
   }, [currentPath, isBizMode, visibleItems.length]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    setIsDragging(true);
     e.currentTarget.setPointerCapture(e.pointerId);
-    if (navContainerRef.current) {
-      const rect = navContainerRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      setDragX(x - indicatorStyle.width / 2);
-    }
+    setDragStartX(e.clientX);
+    wasDraggingRef.current = false;
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    if (navContainerRef.current) {
+    if (dragStartX === null) return;
+    
+    // Eager threshold for true Drag engagement (> 5px movement)
+    if (!isDragging && Math.abs(e.clientX - dragStartX) > 5) {
+      setIsDragging(true);
+      wasDraggingRef.current = true;
+      if (navContainerRef.current) {
+        const rect = navContainerRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        setDragX(x - indicatorStyle.width / 2);
+      }
+    }
+
+    if (isDragging && navContainerRef.current) {
       const rect = navContainerRef.current.getBoundingClientRect();
       let x = e.clientX - rect.left - indicatorStyle.width / 2;
       // Soft clamp
@@ -113,9 +123,12 @@ export default function Navigation() {
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    setIsDragging(false);
+    setDragStartX(null);
     e.currentTarget.releasePointerCapture(e.pointerId);
+    
+    if (!isDragging) return; // Clean tap, aborted drag
+    
+    setIsDragging(false);
     
     if (navContainerRef.current) {
       const rect = navContainerRef.current.getBoundingClientRect();
@@ -139,6 +152,8 @@ export default function Navigation() {
       if (closestIndex !== -1) {
         const item = visibleItems[closestIndex];
         if (!isActive(item.path)) {
+          // Preemptive state patch fixes race condition with Astro router
+          setCurrentPath(item.path);
           navigate(item.path);
         }
       }
@@ -188,7 +203,14 @@ export default function Navigation() {
                 ref={(el) => (tabRefs.current[index] = el)}
                 onClick={(e) => {
                   // If we are dragging, prevent default click navigation
-                  if (isDragging) e.preventDefault();
+                  if (wasDraggingRef.current) {
+                    e.preventDefault();
+                    wasDraggingRef.current = false;
+                    return;
+                  }
+                  
+                  // Clean tap: preemptively patch state for instant CSS 300ms glide 
+                  setCurrentPath(item.path);
                 }}
                 className={`relative flex flex-col items-center justify-center px-4 py-1.5 rounded-xl transition-colors duration-200 ${
                   active
